@@ -29,6 +29,9 @@ PNG_Construct:
 	call PNG_GetReaderIY
 	call PNG_ReadMagicNumber
 	call PNG_ReadIHDR
+	call PNG_Validate
+	ld hl,PNG_invalidPNGError
+	jp c,Application_TerminateWithError
 	ret
 
 ; ix = this
@@ -125,6 +128,69 @@ PNG_ReadIHDR:
 	ld (ix + PNG.interlace),a
 	call PNG_ReadDoubleWordBE_IY  ; skip crc
 	ret
+
+; ix = this
+; f <- c: invalid
+PNG_Validate: PROC
+	bit 7,(ix + PNG.width + 3)
+	jr nz,Invalid
+	bit 7,(ix + PNG.height + 3)
+	jr nz,Invalid
+	xor a
+	or (ix + PNG.compression)
+	jr nz,Invalid
+	or (ix + PNG.filter)
+	jr nz,Invalid
+	ld a,~1
+	and (ix + PNG.interlace)
+	jr nz,Invalid
+	ld a,(ix + PNG.colorType)
+	and a
+	jp z,ColorType0
+	cp 2
+	jp z,ColorType2
+	cp 4
+	jp c,ColorType3
+	jp z,ColorType4
+	cp 6
+	jp z,ColorType6
+	jr Invalid
+ColorType0:
+	ld a,(ix + PNG.bitDepth)
+	cp 1
+	ret z
+	cp 2
+	ret z
+	cp 4
+	ret z
+	cp 8
+	ret z
+	cp 16
+	ret z
+	jr Invalid
+ColorType3:
+	ld a,(ix + PNG.bitDepth)
+	cp 1
+	ret z
+	cp 2
+	ret z
+	cp 4
+	ret z
+	cp 8
+	ret z
+	jr Invalid
+ColorType2:
+ColorType4:
+ColorType6:
+	ld a,(ix + PNG.bitDepth)
+	cp 8
+	ret z
+	cp 16
+	ret z
+Invalid:
+	scf
+	ret
+	ENDP
 
 ; ix = this
 PNG_PrintInfo:
