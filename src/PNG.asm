@@ -105,12 +105,12 @@ PNG_ReadIHDR:
 	call Reader_Read_IY
 	cp "R"
 	jp nz,PNG_TerminateWithInvalidError
-	call PNG_ReadDoubleWordBE_IY
+	call Reader_ReadDoubleWordBE_IY
 	ld (ix + PNG.width),l
 	ld (ix + PNG.width + 1),h
 	ld (ix + PNG.width + 2),e
 	ld (ix + PNG.width + 3),d
-	call PNG_ReadDoubleWordBE_IY
+	call Reader_ReadDoubleWordBE_IY
 	ld (ix + PNG.height),l
 	ld (ix + PNG.height + 1),h
 	ld (ix + PNG.height + 2),e
@@ -125,7 +125,7 @@ PNG_ReadIHDR:
 	ld (ix + PNG.filter),a
 	call Reader_Read_IY
 	ld (ix + PNG.interlace),a
-	call PNG_ReadDoubleWordBE_IY  ; skip crc
+	call Reader_ReadDoubleWordBE_IY  ; skip crc
 	ret
 
 ; ix = this
@@ -239,14 +239,14 @@ PNG_PrintInfo:
 ; ix = this
 PNG_Show: PROC
 Loop:
-	call PNG_ReadDoubleWordBE_IY
+	call Reader_ReadDoubleWordBE_IY
 	bit 7,d
 	jp nz,PNG_TerminateWithInvalidError
 	exx
-	call PNG_ReadDoubleWordBE_IY
+	call Reader_ReadDoubleWordBE_IY
 	call PNG_ProcessChunk
 	push af
-	call PNG_ReadDoubleWordBE_IY  ; skip crc
+	call Reader_ReadDoubleWordBE_IY  ; skip crc
 	pop af
 	jp nc,Loop
 	ret
@@ -384,19 +384,6 @@ PNG_CheckChunkNameCharacter:
 PNG_TerminateWithInvalidError:
 	ld hl,PNG_invalidPNGError
 	jp Application_TerminateWithError
-
-; iy = reader
-; dehl <- value
-PNG_ReadDoubleWordBE_IY:
-	call Reader_Read_IY
-	ld d,a
-	call Reader_Read_IY
-	ld e,a
-	call Reader_Read_IY
-	ld h,a
-	call Reader_Read_IY
-	ld l,a
-	ret
 
 ; dehl = nr of bytes to skip
 ; iy = this
