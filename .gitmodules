@@ -1,3 +1,6 @@
+[submodule "lib/neonlib"]
+	path = lib/neonlib
+	url = ../neonlib
 [submodule "lib/gunzip"]
 	path = lib/gunzip
 	url = ../gunzip

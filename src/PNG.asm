@@ -385,7 +385,7 @@ PNG_CheckChunkNameCharacter:
 ; ix = this
 PNG_TerminateWithInvalidError:
 	ld hl,PNG_invalidPNGError
-	jp Application_TerminateWithError
+	jp System_TerminateWithError
 
 PNG_invalidPNGError:
 	db "Invalid PNG file.",13,10,0

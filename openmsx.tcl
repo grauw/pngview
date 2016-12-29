@@ -1,4 +1,4 @@
-source lib/gunzip/tools/profile.tcl
+source lib/neonlib/tools/profile.tcl
 
 ext debugdevice
 set debugoutput stdout

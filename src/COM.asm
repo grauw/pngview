@@ -18,6 +18,7 @@ READBUFFER_SIZE: equ 0D00H
 TPA: ds 2E80H
 TPA_PAGE0: ds 0080H
 RAM_PAGE0: ds 0300H
+RAM_RESIDENT: equ RAM_PAGE0
 READBUFFER: ds READBUFFER_SIZE
 TPA_PAGE1: ds 3000H
 RAM: ds 0F00H
@@ -52,8 +53,8 @@ COM_Main:
 	INCLUDE "deflate/Branch.asm"
 	INCLUDE "deflate/FixedAlphabets.asm"
 	INCLUDE "deflate/DynamicAlphabets.asm"
-	INCLUDE "deflate/Reader.asm"
-	INCLUDE "deflate/Writer.asm"
+	INCLUDE "Reader.asm"
+	INCLUDE "Writer.asm"
 	INCLUDE "FileReader.asm"
 	INCLUDE "CRC32Checker.asm"
 

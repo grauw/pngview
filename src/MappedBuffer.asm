@@ -92,7 +92,7 @@ MappedBuffer_AllocateSegment:
 	ld a,0
 	call Mapper_instance.Allocate
 	ld hl,MappedBuffer_outOfMemoryError
-	jp c,Application_TerminateWithError
+	jp c,System_TerminateWithError
 	ret
 
 ; a = segment number
@@ -104,7 +104,7 @@ MappedBuffer_AddSegment:
 	ld e,(ix + MappedBuffer.segmentCount)
 	inc e
 	ld hl,MappedBuffer_outOfMemoryError
-	jp z,Application_TerminateWithError
+	jp z,System_TerminateWithError
 	ld (ix + MappedBuffer.segmentCount),e
 	dec e
 	ld d,0

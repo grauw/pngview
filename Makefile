@@ -2,7 +2,7 @@ COPY_TARGET = /Volumes/MSXDOS2
 
 all:
 	mkdir -p bin
-	java -jar tools/glass.jar -I gen -I lib/gunzip/src src/COM.asm bin/pngview.com bin/pngview.sym
+	java -jar tools/glass.jar -I gen -I lib/neonlib/src -I lib/gunzip/src src/COM.asm bin/pngview.com bin/pngview.sym
 
 dist: all
 	cp README.md LICENSE bin/
