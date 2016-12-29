@@ -18,6 +18,8 @@ PNG: MACRO
 		db 0
 	interlace:
 		db 0
+	palette:
+		dw PNG_palette
 	ENDM
 
 ; de = mapped reader
@@ -257,6 +259,8 @@ PNG_ProcessChunk: PROC
 	ld a,d
 	cp "I"
 	jr z,PrefixI
+	cp "P"
+	jr z,PrefixP
 	jp PNG_ProcessUnknownChunk
 PrefixI:
 	ld a,e
@@ -273,6 +277,59 @@ PrefixIEN:
 	cp "D"
 	jr z,PNG_ProcessIENDChunk
 	jp PNG_ProcessUnknownChunk
+PrefixP:
+	ld a,e
+	cp "L"
+	jr z,PrefixPL
+	jp PNG_ProcessUnknownChunk
+PrefixPL:
+	ld a,h
+	cp "T"
+	jr z,PrefixPLT
+	jp PNG_ProcessUnknownChunk
+PrefixPLT:
+	ld a,l
+	cp "E"
+	jr z,PNG_ProcessPLTEChunk
+	jp PNG_ProcessUnknownChunk
+	ENDP
+
+; dehl = name
+; dehl' = size
+; iy = reader
+; ix = this
+; f <- c: not set (end not reached)
+PNG_ProcessPLTEChunk: PROC
+	exx
+	ld a,e
+	or d
+	jp nz,PNG_TerminateWithInvalidError
+	ex de,hl
+	ld hl,300H
+	sbc hl,de
+	jp c,PNG_TerminateWithInvalidError
+	ex de,hl
+	ld e,(ix + PNG.palette)
+	ld d,(ix + PNG.palette + 1)
+	ld bc,-3
+Loop:
+	call Reader_Read_IY
+	ld (de),a
+	inc d
+	call Reader_Read_IY
+	ld (de),a
+	inc d
+	call Reader_Read_IY
+	ld (de),a
+	dec d
+	dec d
+	inc e
+	add hl,bc
+	jp nc,PNG_TerminateWithInvalidError
+	ld a,h
+	or l
+	jr nz,Loop
+	ret
 	ENDP
 
 ; dehl = name
@@ -364,3 +421,11 @@ PNG_filter:
 
 PNG_interlace:
 	db "Interlace method: ",0
+
+	SECTION RAM
+
+	ALIGN 100H
+PNG_palette:
+	ds 256 * 3
+
+	ENDS
