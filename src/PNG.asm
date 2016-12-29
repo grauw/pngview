@@ -364,7 +364,9 @@ PNG_ProcessUnknownChunk:
 	ld a,l
 	call PNG_CheckChunkNameCharacter
 	exx
-	call PNG_SkipDEHL_IY
+	ld c,l
+	ld b,h
+	call Reader_Skip32_IY
 	and a
 	ret
 
@@ -384,28 +386,6 @@ PNG_CheckChunkNameCharacter:
 PNG_TerminateWithInvalidError:
 	ld hl,PNG_invalidPNGError
 	jp Application_TerminateWithError
-
-; dehl = nr of bytes to skip
-; iy = this
-; Modifies: af, bc, de, hl
-PNG_SkipDEHL_IY: PROC
-	ld c,l
-	ld b,h
-	ld a,c
-	or b
-	call nz,Reader_Skip_IY
-	inc de
-Loop:
-	dec de
-	ld a,e
-	or d
-	ret z
-	ld bc,8000H
-	call Reader_Skip_IY
-	ld bc,8000H
-	call Reader_Skip_IY
-	jp Loop
-	ENDP
 
 PNG_invalidPNGError:
 	db "Invalid PNG file.",13,10,0
