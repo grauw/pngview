@@ -353,10 +353,30 @@ PNG_ProcessIENDChunk:
 ; ix = this
 ; f <- c: not set (end not reached)
 PNG_ProcessUnknownChunk:
+	ld a,d
+	call PNG_CheckChunkNameCharacter
+	ld a,e
+	call PNG_CheckChunkNameCharacter
+	ld a,h
+	call PNG_CheckChunkNameCharacter
+	ld a,l
+	call PNG_CheckChunkNameCharacter
 	exx
 	call PNG_SkipDEHL_IY
 	and a
 	ret
+
+; a = character
+PNG_CheckChunkNameCharacter:
+	cp 65
+	jr c,PNG_TerminateWithInvalidError
+	cp 91
+	ret c
+	cp 97
+	jr c,PNG_TerminateWithInvalidError
+	cp 123
+	ret c
+	jr PNG_TerminateWithInvalidError
 
 ; ix = this
 PNG_TerminateWithInvalidError:
