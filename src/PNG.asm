@@ -30,8 +30,7 @@ PNG_Construct:
 	call PNG_ReadMagicNumber
 	call PNG_ReadIHDR
 	call PNG_Validate
-	ld hl,PNG_invalidPNGError
-	jp c,Application_TerminateWithError
+	jp c,PNG_TerminateWithInvalidError
 	ret
 
 ; ix = this
@@ -51,61 +50,59 @@ PNG_GetReaderIY:
 ; iy = reader
 ; ix = this
 PNG_ReadMagicNumber:
-	ld hl,PNG_noPNGFileError
 	call Reader_Read_IY
 	cp 137
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp "P"
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp "N"
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp "G"
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp 13
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp 10
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp 26
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp 10
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	ret
 
 ; iy = reader
 ; ix = this
 PNG_ReadIHDR:
-	ld hl,PNG_invalidPNGError
 	call Reader_Read_IY
 	cp 0
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp 0
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp 0
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp 13
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp "I"
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp "H"
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp "D"
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call Reader_Read_IY
 	cp "R"
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	call PNG_ReadDoubleWordBE_IY
 	ld (ix + PNG.width),l
 	ld (ix + PNG.width + 1),h
@@ -289,8 +286,7 @@ PNG_ProcessIENDChunk:
 	or h
 	or e
 	or d
-	ld hl,PNG_invalidPNGError
-	jp nz,Application_TerminateWithError
+	jp nz,PNG_TerminateWithInvalidError
 	scf
 	ret
 
@@ -304,6 +300,11 @@ PNG_ProcessUnknownChunk:
 	call PNG_SkipDEHL_IY
 	and a
 	ret
+
+; ix = this
+PNG_TerminateWithInvalidError:
+	ld hl,PNG_invalidPNGError
+	jp Application_TerminateWithError
 
 ; iy = reader
 ; dehl <- value
@@ -339,9 +340,6 @@ Loop:
 	call Reader_Skip_IY
 	jp Loop
 	ENDP
-
-PNG_noPNGFileError:
-	db "Not a PNG file.",13,10,0
 
 PNG_invalidPNGError:
 	db "Invalid PNG file.",13,10,0
