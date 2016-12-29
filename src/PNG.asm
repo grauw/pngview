@@ -240,6 +240,8 @@ PNG_PrintInfo:
 PNG_Show: PROC
 Loop:
 	call PNG_ReadDoubleWordBE_IY
+	bit 7,d
+	jp nz,PNG_TerminateWithInvalidError
 	exx
 	call PNG_ReadDoubleWordBE_IY
 	call PNG_ProcessChunk
