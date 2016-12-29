@@ -252,7 +252,7 @@ Loop:
 ; dehl' = size
 ; iy = reader
 ; ix = this
-; f <- end reached
+; f <- c: end reached
 PNG_ProcessChunk: PROC
 	ld a,d
 	cp "I"
@@ -279,7 +279,7 @@ PrefixIEN:
 ; dehl' = size
 ; iy = reader
 ; ix = this
-; f <- end reached
+; f <- c: set (end reached)
 PNG_ProcessIENDChunk:
 	exx
 	ld a,l
@@ -294,7 +294,7 @@ PNG_ProcessIENDChunk:
 ; dehl' = size
 ; iy = reader
 ; ix = this
-; f <- end reached
+; f <- c: not set (end not reached)
 PNG_ProcessUnknownChunk:
 	exx
 	call PNG_SkipDEHL_IY
