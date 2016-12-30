@@ -148,8 +148,9 @@ PNG_Validate: PROC
 	jp z,ColorType0
 	cp 2
 	jp z,ColorType2
+	cp 3
+	jp z,ColorType3
 	cp 4
-	jp c,ColorType3
 	jp z,ColorType4
 	cp 6
 	jp z,ColorType6
