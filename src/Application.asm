@@ -1,17 +1,13 @@
 ;
 ; Top-level application program class
 ;
-Application_PNGREADER_BASE_ADDRESS: equ 8000H
-
 Application: MACRO
 	pngReference:
 		dw 0
 	cli:
 		CLI
-	loader:
-		MappedBufferLoader
 	reader:
-		MappedReader
+		FileReader
 	png:
 		PNG
 	size:
@@ -95,13 +91,6 @@ Application_GetCLI:
 	ret
 
 ; ix = this
-; ix <- loader
-Application_GetLoader:
-	ld de,Application.loader
-	add ix,de
-	ret
-
-; ix = this
 ; ix <- reader
 Application_GetReader:
 	ld de,Application.reader
@@ -148,29 +137,16 @@ Application_ParseCLI:
 ; ix = this
 Application_LoadFile:
 	call Application_PrintLoading
-	call Application_ConstructMappedBuffer
 	push ix
 	call Application_GetCLI
 	call CLI_GetPath
 	pop ix
 	push ix
-	call Application_GetLoader
-	ld de,MappedBuffer_instance
-	call MappedBufferLoader_Construct
-	call MappedBufferLoader_Load
-	call MappedBufferLoader_Destruct
-	pop ix
-	ret
-
-; ix = this
-Application_ConstructMappedBuffer:
-	push ix
-	ld ix,MappedBuffer_instance
-	call MappedBuffer_Construct
-	call Memory_GetSlotPage2
-	ld b,a
-	call Mapper_instance.GetP2
-	call MappedBuffer_SetFreebie
+	call Application_GetReader
+	ex de,hl
+	ld hl,READBUFFER
+	ld bc,READBUFFER_SIZE
+	call FileReader_Construct
 	pop ix
 	ret
 
@@ -192,9 +168,6 @@ Application_ConstructPNG:
 	push ix
 	push ix
 	call Application_GetReader
-	ld de,MappedBuffer_instance
-	ld hl,Application_PNGREADER_BASE_ADDRESS
-	call MappedReader_Construct
 	ex (sp),ix
 	call Application_GetPNG
 	pop de

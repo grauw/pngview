@@ -22,7 +22,7 @@ PNG: MACRO
 		dw PNG_palette
 	ENDM
 
-; de = mapped reader
+; de = reader
 ; ix = this
 ; ix <- this
 PNG_Construct:
