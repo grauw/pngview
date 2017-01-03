@@ -9,13 +9,13 @@
 DEBUG: equ 1
 
 HEAP: equ 0C000H
-HEAP_SIZE: equ 1180H
+HEAP_SIZE: equ 1600H
 STACK_SIZE: equ 100H
-READBUFFER_SIZE: equ 0D00H
+READBUFFER_SIZE: equ 0C00H
 
 	org 100H
 
-TPA: ds 2E80H
+TPA: ds 2F80H
 TPA_PAGE0: ds 0080H
 RAM_PAGE0: ds 0300H
 RAM_RESIDENT: equ RAM_PAGE0
@@ -43,11 +43,12 @@ COM_Main:
 	INCLUDE "MappedBuffer.asm"
 	INCLUDE "MappedBufferLoader.asm"
 	INCLUDE "MappedReader.asm"
+	INCLUDE "IndirectMappedReader.asm"
 	INCLUDE "MappedWriter.asm"
 	INCLUDE "Mapped32KWriter.asm"
 
 	; gunzip
-	INCLUDE "Archive.asm"
+	INCLUDE "ZlibArchive.asm"
 	INCLUDE "deflate/Inflate.asm"
 	INCLUDE "deflate/Alphabet.asm"
 	INCLUDE "deflate/Branch.asm"
@@ -56,10 +57,8 @@ COM_Main:
 	INCLUDE "Reader.asm"
 	INCLUDE "Writer.asm"
 	INCLUDE "FileReader.asm"
-	INCLUDE "CRC32Checker.asm"
-
-CRC32Table:
-	; not present
+	INCLUDE "Adler32Checker.asm"
+	INCLUDE "PNG.asm"
 
 	ENDS
 
@@ -67,7 +66,6 @@ CRC32Table:
 
 	INCLUDE "VDP.asm"
 	INCLUDE "CLI.asm"
-	INCLUDE "PNG.asm"
 	INCLUDE "MemoryTest.asm"
 	INCLUDE "HeapTest.asm"
 

@@ -30,6 +30,10 @@ MappedReader_Construct:
 	call Reader_Construct
 	ret
 
+; ix = this
+MappedReader_Destruct:
+	ret
+
 ; iy = this
 ; de <- buffer
 ; ix <- buffer
@@ -150,6 +154,18 @@ MappedReader_SelectNextSegment_IY:
 	ld a,(iy + MappedReader.positionSegmentIndex)
 	inc a
 	ld (iy + MappedReader.positionSegmentIndex),a
+	push de
+	push ix
+	call MappedReader_GetBuffer_IY
+	ld h,(iy + MappedReader.super.bufferStart + 1)
+	call MappedBuffer_SelectSegment
+	pop ix
+	pop de
+	ret
+
+; iy = this
+MappedReader_SelectCurrentSegment_IY:
+	ld a,(iy + MappedReader.positionSegmentIndex)
 	push de
 	push ix
 	call MappedReader_GetBuffer_IY

@@ -13,8 +13,15 @@ MappedBuffer: MACRO
 	_size:
 	ENDM
 
+MappedBuffer_class: Class MappedBuffer, MappedBuffer_template, Heap_main
+MappedBuffer_template: MappedBuffer
+
 ; ix = this
+; ix <- this
+; de <- this
 MappedBuffer_Construct:
+	ld e,ixl
+	ld d,ixh
 	ret
 
 ; ix = this

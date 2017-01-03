@@ -7,12 +7,17 @@ MappedWriter: MACRO
 	super: Writer
 	buffer:
 		dw 0
-	size:
+	_size:
 	ENDM
+
+MappedWriter_class: Class MappedWriter, MappedWriter_template, Heap_main
+MappedWriter_template: MappedWriter
 
 ; de = mapped buffer
 ; hl = base address
 ; ix = this
+; ix <- this
+; de <- this
 MappedWriter_Construct:
 	ld a,l
 	and a
@@ -26,6 +31,8 @@ MappedWriter_Construct:
 	ld de,MappedWriter_Flush
 	call Writer_Construct
 	call MappedWriter_AllocateNextSegment
+	ld e,ixl
+	ld d,ixh
 	ret
 
 ; ix = this

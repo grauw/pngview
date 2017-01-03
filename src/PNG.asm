@@ -1,6 +1,8 @@
 ;
 ; PNG image
 ;
+PNG_WRITER_BASE_ADDRESS: equ 8000H
+
 PNG: MACRO
 	reader:
 		dw 0
@@ -20,6 +22,12 @@ PNG: MACRO
 		db 0
 	palette:
 		dw PNG_palette
+	rawDataBuffer:
+		dw 0
+	dataBuffer:
+		dw 0
+	dataWriter:
+		MappedWriter
 	ENDM
 
 ; de = reader
@@ -28,16 +36,52 @@ PNG: MACRO
 PNG_Construct:
 	ld (ix + PNG.reader),e
 	ld (ix + PNG.reader + 1),d
+	push ix
+	call MappedBuffer_class.New
+	call MappedBuffer_Construct
+	pop ix
+	ld (ix + PNG.dataBuffer),e
+	ld (ix + PNG.dataBuffer + 1),d
+	push ix
+	ld hl,PNG_WRITER_BASE_ADDRESS
+	call MappedWriter_class.New
+	call MappedWriter_Construct
+	pop ix
+	ld (ix + PNG.dataWriter),e
+	ld (ix + PNG.dataWriter + 1),d
+	push ix
+	call MappedBuffer_class.New
+	call MappedBuffer_Construct
+	pop ix
+	ld (ix + PNG.rawDataBuffer),e
+	ld (ix + PNG.rawDataBuffer + 1),d
 	call PNG_GetReaderIY
 	call PNG_ReadMagicNumber
 	call PNG_ReadIHDR
 	call PNG_Validate
 	jp c,PNG_TerminateWithInvalidError
+	call PNG_Process
+	call PNG_Decompress
 	ret
 
 ; ix = this
 ; ix <- this
 PNG_Destruct:
+	push ix
+	call PNG_GetRawDataBuffer
+	call MappedBuffer_Destruct
+	call MappedBuffer_class.Delete
+	pop ix
+	push ix
+	call PNG_GetDataWriter
+	call MappedWriter_Destruct
+	call MappedWriter_class.Delete
+	pop ix
+	push ix
+	call PNG_GetDataBuffer
+	call MappedBuffer_Destruct
+	call MappedBuffer_class.Delete
+	pop ix
 	ret
 
 ; ix = this
@@ -47,6 +91,33 @@ PNG_GetReaderIY:
 	ld d,(ix + PNG.reader + 1)
 	ld iyl,e
 	ld iyh,d
+	ret
+
+; ix = this
+; ix <- mapped buffer
+PNG_GetDataBuffer:
+	ld e,(ix + PNG.dataBuffer)
+	ld d,(ix + PNG.dataBuffer + 1)
+	ld ixl,e
+	ld ixh,d
+	ret
+
+; ix = this
+; ix <- mapped writer
+PNG_GetDataWriter:
+	ld e,(ix + PNG.dataWriter)
+	ld d,(ix + PNG.dataWriter + 1)
+	ld ixl,e
+	ld ixh,d
+	ret
+
+; ix = this
+; ix <- mapped buffer
+PNG_GetRawDataBuffer:
+	ld e,(ix + PNG.rawDataBuffer)
+	ld d,(ix + PNG.rawDataBuffer + 1)
+	ld ixl,e
+	ld ixh,d
 	ret
 
 ; iy = reader
@@ -238,7 +309,46 @@ PNG_PrintInfo:
 	ret
 
 ; ix = this
-PNG_Show: PROC
+PNG_Show:
+	ret
+
+; ix = this
+PNG_Decompress:
+	push ix
+	push ix
+	call PNG_GetDataBuffer
+	ld hl,READBUFFER
+	ld bc,READBUFFER_SIZE
+	call IndirectMappedReader_class.New
+	call IndirectMappedReader_Construct
+	ld e,ixl
+	ld d,ixh
+	ex (sp),ix  ; sp = this, reader, ix = this
+	push ix
+	ld a,-1
+	call ZlibArchive_class.New
+	call ZlibArchive_Construct
+	ex (sp),ix  ; sp = this, reader, zlibarchive, ix = this
+	call PNG_GetRawDataBuffer
+	call Mapped32KWriter_class.New
+	call Mapped32KWriter_Construct
+	ld e,ixl
+	ld d,ixh
+	ex (sp),ix  ; sp = this, reader, writer, ix = zlibarchive
+	call ZlibArchive_Extract
+	call ZlibArchive_Destruct
+	call ZlibArchive_class.Delete
+	pop ix
+	call Mapped32KWriter_Destruct
+	call Mapped32KWriter_class.Delete
+	pop ix
+	call IndirectMappedReader_Destruct
+	call IndirectMappedReader_class.Delete
+	pop ix
+	ret
+
+; ix = this
+PNG_Process: PROC
 Loop:
 	call Reader_ReadDoubleWordBE_IY
 	bit 7,d
@@ -267,8 +377,20 @@ PNG_ProcessChunk: PROC
 	jp PNG_ProcessUnknownChunk
 PrefixI:
 	ld a,e
+	cp "D"
+	jr z,PrefixID
 	cp "E"
 	jr z,PrefixIE
+	jp PNG_ProcessUnknownChunk
+PrefixID:
+	ld a,h
+	cp "A"
+	jr z,PrefixIDA
+	jp PNG_ProcessUnknownChunk
+PrefixIDA:
+	ld a,l
+	cp "T"
+	jr z,PNG_ProcessIDATChunk
 	jp PNG_ProcessUnknownChunk
 PrefixIE:
 	ld a,h
@@ -334,6 +456,22 @@ Loop:
 	jr nz,Loop
 	ret
 	ENDP
+
+; dehl = name
+; dehl' = size
+; iy = reader
+; ix = this
+; f <- c: not set (end not reached)
+PNG_ProcessIDATChunk:
+	push ix
+	call PNG_GetDataWriter
+	exx
+	ld c,l
+	ld b,h
+	call Writer_CopyFromReader32
+	pop ix
+	and a
+	ret
 
 ; dehl = name
 ; dehl' = size
