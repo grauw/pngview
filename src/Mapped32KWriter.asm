@@ -16,6 +16,7 @@ Mapped32KWriter: MACRO
 	originalSlot2:
 		db 0
 	originalMapperBank2:
+		db 0
 	_size:
 	ENDM
 
