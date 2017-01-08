@@ -177,11 +177,21 @@ PNG_ReadIHDR:
 	cp "R"
 	jp nz,PNG_TerminateWithInvalidError
 	call Reader_ReadDoubleWordBE_IY
+	ld a,l
+	or h
+	or e
+	or d
+	jp z,PNG_TerminateWithInvalidError
 	ld (ix + PNG.width),l
 	ld (ix + PNG.width + 1),h
 	ld (ix + PNG.width + 2),e
 	ld (ix + PNG.width + 3),d
 	call Reader_ReadDoubleWordBE_IY
+	ld a,l
+	or h
+	or e
+	or d
+	jp z,PNG_TerminateWithInvalidError
 	ld (ix + PNG.height),l
 	ld (ix + PNG.height + 1),h
 	ld (ix + PNG.height + 2),e
