@@ -9,7 +9,7 @@
 DEBUG: equ 1
 
 HEAP: equ 0C000H
-HEAP_SIZE: equ 1600H
+HEAP_SIZE: equ 1580H
 STACK_SIZE: equ 100H
 READBUFFER_SIZE: equ 0C00H
 
@@ -65,9 +65,11 @@ COM_Main:
 	SECTION TPA_PAGE1
 
 	INCLUDE "VDP.asm"
+	INCLUDE "VDPCommand.asm"
 	INCLUDE "CLI.asm"
 	INCLUDE "MemoryTest.asm"
 	INCLUDE "HeapTest.asm"
+	INCLUDE "PNGViewer.asm"
 
 	ENDS
 

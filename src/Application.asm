@@ -10,6 +10,8 @@ Application: MACRO
 		FileReader
 	png:
 		PNG
+	pngViewer:
+		PNGViewer
 	size:
 	ENDM
 
@@ -114,6 +116,13 @@ Application_GetPNGReference:
 	ret
 
 ; ix = this
+; ix <- PNG viewer
+Application_GetPNGViewer:
+	ld de,Application.pngViewer
+	add ix,de
+	ret
+
+; ix = this
 Application_EnterMainLoop:
 	call Application_ParseCLI
 	call Application_LoadFile
@@ -186,7 +195,11 @@ Application_Show:
 	call System_Print
 	push ix
 	call Application_GetPNG
-	call PNG_Show
+	ex (sp),ix
+	call Application_GetPNGViewer
+	pop de
+	call PNGViewer_Construct
+	call PNGViewer_Show
 	pop ix
 	ret
 

@@ -319,10 +319,6 @@ PNG_PrintInfo:
 	ret
 
 ; ix = this
-PNG_Show:
-	ret
-
-; ix = this
 PNG_Decompress:
 	push ix
 	push ix
