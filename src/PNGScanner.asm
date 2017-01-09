@@ -13,7 +13,7 @@ PNGScanner: MACRO
 		db 0
 	lineSize:
 		dw 0
-	bytesPerPixel:
+	bytesPerPixelNegated:
 		db 0
 	scanlineA:
 		dw scanlineABuffer
@@ -52,7 +52,8 @@ PNGScanner_Construct:
 	pop ix
 	ld (ix + PNGScanner.lineSize),l
 	ld (ix + PNGScanner.lineSize + 1),h
-	ld (ix + PNGScanner.bytesPerPixel),a
+	neg
+	ld (ix + PNGScanner.bytesPerPixelNegated),a
 	ld bc,PNGScanner_MAX_LINESIZE
 	scf
 	sbc hl,bc
@@ -110,7 +111,30 @@ PNGScanner_FilterNone:
 ; ix = this
 ; hl <- scanline
 PNGScanner_FilterSub: PROC
-	jp PNG_TerminateWithUnsupportedError
+	res 0,(ix + PNGScanner.currentScanline)
+	ld e,(ix + PNGScanner.scanlineA)
+	ld d,(ix + PNGScanner.scanlineA + 1)
+	ld c,(ix + PNGScanner.lineSize)
+	ld b,(ix + PNGScanner.lineSize + 1)
+	push de
+	call Reader_ReadBlock_IY
+	pop de
+	push de
+	ld l,(ix + PNGScanner.bytesPerPixelNegated)
+	ld h,-1
+	add hl,de
+	; de = Raw(x), hl = Raw(x-bpp)
+Loop:
+	ld a,(de)
+	add a,(hl)
+	ld (de),a
+	inc hl
+	inc de
+	dec bc
+	ld a,b
+	or c
+	jp nz,Loop
+	pop hl
 	ret
 	ENDP
 
