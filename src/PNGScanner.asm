@@ -92,7 +92,7 @@ PNGScanner_ReadScanline:
 	jr c,PNGScanner_FilterUp
 	jr z,PNGScanner_FilterAverage
 	cp 4
-	jr c,PNGScanner_FilterPaeth
+	jp c,PNGScanner_FilterPaeth
 	jp PNG_TerminateWithInvalidError
 
 ; ix = this
@@ -177,7 +177,47 @@ Loop:
 ; ix = this
 ; hl <- scanline
 PNGScanner_FilterAverage: PROC
-	jp PNG_TerminateWithUnsupportedError
+	ld l,(ix + PNGScanner.scanlineA)
+	ld h,(ix + PNGScanner.scanlineA + 1)
+	ld e,(ix + PNGScanner.scanlineB)
+	ld d,(ix + PNGScanner.scanlineB + 1)
+	ld c,(ix + PNGScanner.lineSize)
+	ld b,(ix + PNGScanner.lineSize + 1)
+	ld a,(ix + PNGScanner.currentScanline)
+	xor 1
+	ld (ix + PNGScanner.currentScanline),a
+	jr nz,NoSwap
+	ex de,hl
+NoSwap:
+	push de
+	push hl
+	call Reader_ReadBlock_IY
+	exx
+	pop hl
+	exx
+	pop de
+	push de
+	ld l,(ix + PNGScanner.bytesPerPixelNegated)
+	ld h,-1
+	add hl,de
+	ex de,hl
+	; hl = Raw(x), de = Raw(x-bpp), hl' = Prior(x)
+Loop:
+	ld a,(de)
+	exx
+	add a,(hl)
+	inc hl
+	exx
+	rra
+	add a,(hl)
+	ld (hl),a
+	inc hl
+	inc de
+	dec bc
+	ld a,b
+	or c
+	jp nz,Loop
+	pop hl
 	ret
 	ENDP
 
