@@ -70,6 +70,7 @@ COM_Main:
 	INCLUDE "MemoryTest.asm"
 	INCLUDE "HeapTest.asm"
 	INCLUDE "PNGViewer.asm"
+	INCLUDE "PNGScanner.asm"
 
 	ENDS
 

@@ -274,6 +274,95 @@ Invalid:
 	ENDP
 
 ; ix = this
+; bc <- line size
+PNG_GetLineSize: PROC
+	ld l,(ix + PNG.width)
+	ld h,(ix + PNG.width + 1)
+	ld e,(ix + PNG.width + 2)
+	ld d,(ix + PNG.width + 3)
+	ld a,e
+	or d
+	jp nz,PNG_TerminateWithUnsupportedError
+	ld a,(ix + PNG.bitDepth)
+	cp 1
+	jr z,BitDepth1
+	cp 2
+	jr z,BitDepth2
+	cp 4
+	jr z,BitDepth4
+	cp 8
+	jr z,BitDepth8
+BitDepth16:
+	add hl,hl
+	jp c,PNG_TerminateWithUnsupportedError
+	jp BitDepthDone
+BitDepth4:
+	srl h
+	rr l
+BitDepth2:
+	srl h
+	rr l
+BitDepth1:
+	srl h
+	rr l
+BitDepth8:
+BitDepthDone:
+	ld a,(ix + PNG.colorType)
+	cp 0
+	jr z,ColorType0
+	cp 2
+	jr z,ColorType2
+	cp 3
+	jr z,ColorType3
+	cp 4
+	jr z,ColorType4
+ColorType6:
+	add hl,hl
+	jp c,PNG_TerminateWithUnsupportedError
+ColorType4:
+	add hl,hl
+	jp c,PNG_TerminateWithUnsupportedError
+	ret
+ColorType2:
+	ex de,hl
+	ld hl,0
+	add hl,de
+	add hl,de
+	jp c,PNG_TerminateWithUnsupportedError
+	add hl,de
+	jp c,PNG_TerminateWithUnsupportedError
+ColorType0:
+ColorType3:
+ColorTypeDone:
+	ret
+	ENDP
+
+; ix = this
+; a <- bytes per pixel
+PNG_GetBytesPerPixel: PROC
+	ld b,1
+	ld a,(ix + PNG.colorType)
+	cp 2
+	jr z,ColorType2
+	cp 4
+	jr z,ColorType4
+	cp 6
+	jr nz,BitDepth
+ColorType6:
+	inc b
+ColorType2:
+	inc b
+ColorType4:
+	inc b
+BitDepth:
+	bit 4,(ix + PNG.bitDepth)
+	ld a,b
+	ret z
+	add a,a
+	ret
+	ENDP
+
+; ix = this
 PNG_PrintInfo:
 	ld hl,PNG_width
 	call System_Print
@@ -529,7 +618,8 @@ PNG_CheckChunkNameCharacter:
 
 ; ix = this
 PNG_TerminateWithInvalidError:
-	ld hl,PNG_invalidError
+	call VDP_InitText
+	ld hl,PNG_invalidPNGError
 	jp System_TerminateWithError
 
 ; ix = this
@@ -539,7 +629,7 @@ PNG_TerminateWithUnsupportedError:
 	jp System_TerminateWithError
 
 ;
-PNG_invalidError:
+PNG_invalidPNGError:
 	db "Invalid PNG file.",13,10,0
 
 PNG_unsupportedError:

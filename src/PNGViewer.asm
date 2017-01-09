@@ -6,12 +6,12 @@ PNGViewer_READER_BASE_ADDRESS: equ 8000H
 PNGViewer: MACRO
 	png:
 		dw 0
-	commandActive:
+	transferPort:
 		db 0
-	reader:
-		MappedReader
 	vdpCommand:
 		VDPCommand 0, 0, 0, 0, 32, 32, 0, 0, VDPCommand_LMMC
+	scanner:
+		PNGScanner
 	ENDM
 
 ; de = PNG image
@@ -20,16 +20,13 @@ PNGViewer_Construct:
 	ld (ix + PNGViewer.png),e
 	ld (ix + PNGViewer.png + 1),d
 	push ix
-	ld ixl,e
-	ld ixh,d
-	call PNG_GetRawDataBuffer
+	push de
+	call PNGViewer_GetScanner
+	pop de
+	call PNGScanner_Construct
 	pop ix
-	push ix
-	ld bc,PNGViewer.reader
-	add ix,bc
-	ld hl,PNGViewer_READER_BASE_ADDRESS
-	call MappedReader_Construct
-	pop ix
+	ld (ix + PNGViewer.scanner),e
+	ld (ix + PNGViewer.scanner + 1),d
 	ret
 
 ; ix = this
@@ -42,21 +39,19 @@ PNGViewer_GetPNG:
 	ret
 
 ; ix = this
-; iy <- reader
-PNGViewer_GetReaderIY:
-	push ix
-	pop iy
-	ld de,PNGViewer.reader
-	add iy,de
-	ret
-
-; ix = this
 ; iy <- VDP command
 PNGViewer_GetVDPCommandIY:
 	push ix
 	pop iy
 	ld de,PNGViewer.vdpCommand
 	add iy,de
+	ret
+
+; ix = this
+; ix <- scanner
+PNGViewer_GetScanner:
+	ld de,PNGViewer.scanner
+	add ix,de
 	ret
 
 ; ix = this
@@ -79,11 +74,12 @@ PNGViewer_Show: PROC
 	pop ix
 Loop:
 	push bc
-	ld hl,PNGViewer_scanline
-	call PNGViewer_ReadScanline
+	push ix
+	call PNGViewer_GetScanner
+	call PNGScanner_ReadScanline
+	pop ix
 	pop bc
 	push bc
-	ld hl,PNGViewer_scanline
 	call PNGViewer_ShowScanline
 	pop bc
 	dec c
@@ -94,73 +90,66 @@ Loop:
 	ENDP
 
 ; b = width
+; hl = scanline
 ; ix = this
-PNGViewer_ReadScanline: PROC
-	call PNGViewer_GetReaderIY
-	call Reader_Read_IY
-	and a
-	jp nz,PNG_TerminateWithUnsupportedError
+PNGViewer_ShowScanline: PROC
+	ld c,(ix + PNGViewer.transferPort)
 Loop:
-	push hl
-	call Reader_Read_IY
-	ld h,PNGViewer_rgbLUTs >> 8
-	ld l,a
-	ld d,(hl)
-	call Reader_Read_IY
-	inc h
-	ld l,a
+	ld d,PNGViewer_rgbLUTs >> 8
 	ld e,(hl)
-	call Reader_Read_IY
-	inc h
-	ld l,a
-	ld a,(hl)
-	or d
-	or e
-	pop hl
-	ld (hl),a
+	ld a,(de)
 	inc hl
+	inc d
+	ld e,(hl)
+	ex de,hl
+	or (hl)
+	ex de,hl
+	inc hl
+	inc d
+	ld e,(hl)
+	ex de,hl
+	or (hl)
+	ex de,hl
+	inc hl
+	call PNGViewer_Transfer
 	djnz Loop
 	ret
 	ENDP
 
-; b = width
+; a = color
+; c = transfer I/O port
 ; ix = this
-PNGViewer_ShowScanline:
-	call PNGViewer_GetVDPCommandIY
-	ld a,(ix + PNGViewer.commandActive)
-	and a
-	call z,PNGViewer_ExecuteVDPCommand
-	ld c,b
-	ld b,0
-	ld a,b
-	or c
-	call nz,VDPCommand_Transfer_IY
+PNGViewer_Transfer:
+	inc c
+	dec c
+	jr z,PNGViewer_ExecuteVDPCommand
+	out (c),a
 	ret
 
+; a = color
 ; b = width
-; hl = color data
-; iy = VDP command
 ; ix = this
-; hl <- updated
-; b < updated
+; c <- transfer port
+; Modifies: af
 PNGViewer_ExecuteVDPCommand:
-	ld a,(hl)
-	push bc
+	push de
 	push hl
+	push iy
+	push bc
+	call PNGViewer_GetVDPCommandIY
+	ld (iy + VDPCommand.nx),b
 	ld (iy + VDPCommand.color),a
 	call VDPCommand_Execute_IY
-	ld (ix + PNGViewer.commandActive),-1
-	pop hl
 	pop bc
-	inc hl
-	dec b
+	call VDPCommand_PrepareTransfer
+	pop iy
+	pop hl
+	pop de
+	ld (ix + PNGViewer.transferPort),c
 	ret
 
 ;
 	SECTION RAM
-
-PNGViewer_scanline:
-	ds 256 * 3,255
 
 	ALIGN 100H
 PNGViewer_rgbLUTs:
