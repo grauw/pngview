@@ -103,15 +103,15 @@ PNGViewer_ReadScanline: PROC
 Loop:
 	push hl
 	call Reader_Read_IY
-	ld h,PNGViewer_redLUT >> 8
+	ld h,PNGViewer_rgbLUTs >> 8
 	ld l,a
 	ld d,(hl)
 	call Reader_Read_IY
-	ld h,PNGViewer_greenLUT >> 8
+	inc h
 	ld l,a
 	ld e,(hl)
 	call Reader_Read_IY
-	ld h,PNGViewer_blueLUT >> 8
+	inc h
 	ld l,a
 	ld a,(hl)
 	or d
@@ -163,19 +163,13 @@ PNGViewer_scanline:
 	ds 256 * 3,255
 
 	ALIGN 100H
-PNGViewer_redLUT:
+PNGViewer_rgbLUTs:
 	REPT 256, ?value
 	db (?value * 7 + 128) / 255 << 2
 	ENDM
-
-	ALIGN 100H
-PNGViewer_greenLUT:
 	REPT 256, ?value
 	db (?value * 7 + 128) / 255 << 5
 	ENDM
-
-	ALIGN 100H
-PNGViewer_blueLUT:
 	REPT 256, ?value
 	db (?value * 3 + 128) / 255
 	ENDM
