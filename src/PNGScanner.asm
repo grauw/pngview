@@ -92,7 +92,7 @@ PNGScanner_ReadScanline:
 	jr c,PNGScanner_FilterUp
 	jr z,PNGScanner_FilterAverage
 	cp 4
-	jp c,PNGScanner_FilterPaeth
+	jp z,PNGScanner_FilterPaeth
 	jp PNG_TerminateWithInvalidError
 
 ; ix = this
@@ -224,6 +224,105 @@ Loop:
 ; ix = this
 ; hl <- scanline
 PNGScanner_FilterPaeth: PROC
-	jp PNG_TerminateWithUnsupportedError
+	ld l,(ix + PNGScanner.scanlineA)
+	ld h,(ix + PNGScanner.scanlineA + 1)
+	ld e,(ix + PNGScanner.scanlineB)
+	ld d,(ix + PNGScanner.scanlineB + 1)
+	ld c,(ix + PNGScanner.lineSize)
+	ld b,(ix + PNGScanner.lineSize + 1)
+	ld a,(ix + PNGScanner.currentScanline)
+	xor 1
+	ld (ix + PNGScanner.currentScanline),a
+	jr nz,NoSwap
+	ex de,hl
+NoSwap:
+	push de
+	push hl
+	call Reader_ReadBlock_IY
+	exx
+	pop de
+	ld l,(ix + PNGScanner.bytesPerPixelNegated)
+	ld h,-1
+	add hl,de
+	ex de,hl
+	exx
+	pop de
+	push de
+	ld l,(ix + PNGScanner.bytesPerPixelNegated)
+	ld h,-1
+	add hl,de
+	ex de,hl
+	; hl = Raw(x), de = Raw(x-bpp), hl' = Prior(x), de' = Prior(x-bpp)
+Loop:
+	push bc
+	push de
+	push hl
+	exx
+	ld a,(hl)
+	inc hl
+	exx
+	ld b,a
+	exx
+	ld a,(de)
+	inc de
+	exx
+	ld c,a
+	ld a,(de)
+	call PaethPredictor
+	pop hl
+	pop de
+	pop bc
+	add a,(hl)
+	ld (hl),a
+	inc hl
+	inc de
+	dec bc
+	ld a,b
+	or c
+	jp nz,Loop
+	pop hl
 	ret
+PaethPredictor:
+	ld l,a
+	add a,b
+	jr c,AddOverflow
+	sub c
+	jr nc,Continue
+	ld a,0
+	jp Continue
+AddOverflow:
+	sub c
+	jr c,Continue
+	ld a,255
+Continue:
+	ld h,a  ; p := a + b - c
+	ABS b
+	ld d,a  ; pb := abs(p - b)
+	ld a,h
+	ABS c
+	ld e,a  ; pc := abs(p - c)
+	ld a,h
+	ABS l
+	ld h,a  ; pa := abs(p - a)
+	ld a,d
+	cp h
+	jr c,CheckReturnBC
+	ld a,e
+	cp h
+	jr c,CheckReturnBC
+	ld a,l  ; if pa <= pb AND pa <= pc then return a
+	ret
+CheckReturnBC:
+	ld a,e
+	cp d
+	ld a,b  ; else if pb <= pc then return b
+	ret nc
+	ld a,c  ; else return c
+	ret
+ABS: MACRO ?register
+	sub ?register
+	jr nc,Done
+	neg
+Done:
+	ENDM
 	ENDP
