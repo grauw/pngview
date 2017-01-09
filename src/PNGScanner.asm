@@ -141,7 +141,36 @@ Loop:
 ; ix = this
 ; hl <- scanline
 PNGScanner_FilterUp: PROC
-	jp PNG_TerminateWithUnsupportedError
+	ld l,(ix + PNGScanner.scanlineA)
+	ld h,(ix + PNGScanner.scanlineA + 1)
+	ld e,(ix + PNGScanner.scanlineB)
+	ld d,(ix + PNGScanner.scanlineB + 1)
+	ld c,(ix + PNGScanner.lineSize)
+	ld b,(ix + PNGScanner.lineSize + 1)
+	ld a,(ix + PNGScanner.currentScanline)
+	xor 1
+	ld (ix + PNGScanner.currentScanline),a
+	jr nz,NoSwap
+	ex de,hl
+NoSwap:
+	push de
+	push hl
+	call Reader_ReadBlock_IY
+	pop de
+	pop hl
+	push hl
+	; hl = Raw(x), de = Prior(x)
+Loop:
+	ld a,(de)
+	add a,(hl)
+	ld (hl),a
+	inc hl
+	inc de
+	dec bc
+	ld a,b
+	or c
+	jp nz,Loop
+	pop hl
 	ret
 	ENDP
 
