@@ -532,9 +532,18 @@ PNG_TerminateWithInvalidError:
 	ld hl,PNG_invalidError
 	jp System_TerminateWithError
 
+; ix = this
+PNG_TerminateWithUnsupportedError:
+	call VDP_InitText
+	ld hl,PNG_unsupportedError
+	jp System_TerminateWithError
+
 ;
 PNG_invalidError:
 	db "Invalid PNG file.",13,10,0
+
+PNG_unsupportedError:
+	db "Unsupported PNG feature.",13,10,0
 
 PNG_width:
 	db "Width: ",0

@@ -67,13 +67,13 @@ PNGViewer_Show: PROC
 	call PNGViewer_GetPNG
 	ld a,(ix + PNG.colorType)
 	cp 2
-	jp nz,PNGViewer_TerminateWithUnsupportedError
+	jp nz,PNG_TerminateWithUnsupportedError
 	ld a,(ix + PNG.bitDepth)
 	cp 8
-	jp nz,PNGViewer_TerminateWithUnsupportedError
+	jp nz,PNG_TerminateWithUnsupportedError
 	ld a,(ix + PNG.interlace)
 	and a
-	jp nz,PNGViewer_TerminateWithUnsupportedError
+	jp nz,PNG_TerminateWithUnsupportedError
 	ld b,(ix + PNG.width)
 	ld c,(ix + PNG.height)
 	pop ix
@@ -99,7 +99,7 @@ PNGViewer_ReadScanline: PROC
 	call PNGViewer_GetReaderIY
 	call Reader_Read_IY
 	and a
-	jp nz,PNGViewer_TerminateWithUnsupportedError
+	jp nz,PNG_TerminateWithUnsupportedError
 Loop:
 	push hl
 	call Reader_Read_IY
@@ -156,16 +156,7 @@ PNGViewer_ExecuteVDPCommand:
 	dec b
 	ret
 
-; ix = this
-PNGViewer_TerminateWithUnsupportedError:
-	call VDP_InitText
-	ld hl,PNGViewer_unsupportedError
-	jp System_TerminateWithError
-
 ;
-PNGViewer_unsupportedError:
-	db "Unsupported PNG feature.",13,10,0
-
 	SECTION RAM
 
 PNGViewer_scanline:
