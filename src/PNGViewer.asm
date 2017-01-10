@@ -77,7 +77,7 @@ PNGViewer_Show: PROC
 	jp nz,PNG_TerminateWithUnsupportedError
 	ld a,(ix + PNG.bitDepth)
 	cp 8
-	jp nz,PNG_TerminateWithUnsupportedError
+	jp c,PNG_TerminateWithUnsupportedError
 	ld a,(ix + PNG.interlace)
 	and a
 	jp nz,PNG_TerminateWithUnsupportedError

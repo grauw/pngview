@@ -2,7 +2,7 @@
 ; PNG scanline reader
 ;
 PNGScanner_READER_BASE_ADDRESS: equ 8000H
-PNGScanner_MAX_LINESIZE: equ 256 * 8
+PNGScanner_MAX_LINESIZE: equ 256 * 4
 
 PNGScanner: MACRO
 	png:
@@ -15,15 +15,17 @@ PNGScanner: MACRO
 		dw 0
 	bytesPerPixelNegated:
 		db 0
+	bitDepth:
+		db 0
 	scanlineA:
 		dw scanlineABuffer
 	scanlineB:
 		dw scanlineBBuffer
 
-		ds 8
+		ds 4
 	scanlineABuffer:
 		ds PNGScanner_MAX_LINESIZE
-		ds 8
+		ds 4
 	scanlineBBuffer:
 		ds PNGScanner_MAX_LINESIZE
 	ENDM
@@ -31,7 +33,7 @@ PNGScanner: MACRO
 ; de = PNG image
 ; ix = this
 ; de <- this
-PNGScanner_Construct:
+PNGScanner_Construct: PROC
 	ld (ix + PNGScanner.png),e
 	ld (ix + PNGScanner.png + 1),d
 	push ix
@@ -49,7 +51,15 @@ PNGScanner_Construct:
 	call PNGScanner_GetPNG
 	call PNG_GetLineSize
 	call PNG_GetBytesPerPixel
+	ld e,(ix + PNG.bitDepth)
 	pop ix
+	bit 4,e
+	jr z,Not16Bpp
+	srl a
+	srl h
+	rr l
+Not16Bpp:
+	ld (ix + PNGScanner.bitDepth),e
 	ld (ix + PNGScanner.lineSize),l
 	ld (ix + PNGScanner.lineSize + 1),h
 	neg
@@ -61,6 +71,7 @@ PNGScanner_Construct:
 	ld e,ixl
 	ld d,ixh
 	ret
+	ENDP
 
 ; ix = this
 ; ix <- png image
@@ -327,5 +338,31 @@ Done:
 PNGScanner_ReadBlock:
 	ld c,(ix + PNGScanner.lineSize)
 	ld b,(ix + PNGScanner.lineSize + 1)
+	bit 4,(ix + PNGScanner.bitDepth)
+	jp nz,PNGScanner_ReadBlock16Bpp
 	call Reader_ReadBlock_IY
 	ret
+
+; bc = line size
+; de = scanline
+; iy = reader
+; ix = this
+; bc <- bytes read
+PNGScanner_ReadBlock16Bpp: PROC
+	push bc
+	ld a,c
+	dec bc
+	inc b
+	ld c,b
+	ld b,a
+Loop:
+	call Reader_Read_IY
+	ld (de),a
+	call Reader_Read_IY
+	inc de
+	djnz Loop
+	dec c
+	jr nz,Loop
+	pop bc
+	ret
+	ENDP
