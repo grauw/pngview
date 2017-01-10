@@ -42,10 +42,20 @@ PNGViewer_Construct: PROC
 	jp nz,PNG_TerminateWithUnsupportedError
 	ld c,(ix + PNG.width)
 	ld b,(ix + PNG.width + 1)
+	ld hl,-256
+	add hl,bc
+	jr nc,NoCropWidth
+	ld bc,256
+NoCropWidth:
 	ld (iy + VDPCommand.nx),c
 	ld (iy + VDPCommand.nx + 1),b
 	ld c,(ix + PNG.height)
 	ld b,(ix + PNG.height + 1)
+	ld hl,-212
+	add hl,bc
+	jr nc,NoCropHeight
+	ld bc,212
+NoCropHeight:
 	ld (iy + VDPCommand.ny),c
 	ld (iy + VDPCommand.ny + 1),b
 	ld b,(ix + PNG.colorType)
