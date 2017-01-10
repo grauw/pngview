@@ -101,10 +101,8 @@ PNGScanner_FilterNone:
 	res 0,(ix + PNGScanner.currentScanline)
 	ld e,(ix + PNGScanner.scanlineA)
 	ld d,(ix + PNGScanner.scanlineA + 1)
-	ld c,(ix + PNGScanner.lineSize)
-	ld b,(ix + PNGScanner.lineSize + 1)
 	push de
-	call Reader_ReadBlock_IY
+	call PNGScanner_ReadBlock
 	pop hl
 	ret
 
@@ -114,10 +112,8 @@ PNGScanner_FilterSub: PROC
 	res 0,(ix + PNGScanner.currentScanline)
 	ld e,(ix + PNGScanner.scanlineA)
 	ld d,(ix + PNGScanner.scanlineA + 1)
-	ld c,(ix + PNGScanner.lineSize)
-	ld b,(ix + PNGScanner.lineSize + 1)
 	push de
-	call Reader_ReadBlock_IY
+	call PNGScanner_ReadBlock
 	pop de
 	push de
 	ld l,(ix + PNGScanner.bytesPerPixelNegated)
@@ -145,8 +141,6 @@ PNGScanner_FilterUp: PROC
 	ld h,(ix + PNGScanner.scanlineA + 1)
 	ld e,(ix + PNGScanner.scanlineB)
 	ld d,(ix + PNGScanner.scanlineB + 1)
-	ld c,(ix + PNGScanner.lineSize)
-	ld b,(ix + PNGScanner.lineSize + 1)
 	ld a,(ix + PNGScanner.currentScanline)
 	xor 1
 	ld (ix + PNGScanner.currentScanline),a
@@ -155,7 +149,7 @@ PNGScanner_FilterUp: PROC
 NoSwap:
 	push de
 	push hl
-	call Reader_ReadBlock_IY
+	call PNGScanner_ReadBlock
 	pop de
 	pop hl
 	push hl
@@ -181,8 +175,6 @@ PNGScanner_FilterAverage: PROC
 	ld h,(ix + PNGScanner.scanlineA + 1)
 	ld e,(ix + PNGScanner.scanlineB)
 	ld d,(ix + PNGScanner.scanlineB + 1)
-	ld c,(ix + PNGScanner.lineSize)
-	ld b,(ix + PNGScanner.lineSize + 1)
 	ld a,(ix + PNGScanner.currentScanline)
 	xor 1
 	ld (ix + PNGScanner.currentScanline),a
@@ -191,7 +183,7 @@ PNGScanner_FilterAverage: PROC
 NoSwap:
 	push de
 	push hl
-	call Reader_ReadBlock_IY
+	call PNGScanner_ReadBlock
 	exx
 	pop hl
 	exx
@@ -228,8 +220,6 @@ PNGScanner_FilterPaeth: PROC
 	ld h,(ix + PNGScanner.scanlineA + 1)
 	ld e,(ix + PNGScanner.scanlineB)
 	ld d,(ix + PNGScanner.scanlineB + 1)
-	ld c,(ix + PNGScanner.lineSize)
-	ld b,(ix + PNGScanner.lineSize + 1)
 	ld a,(ix + PNGScanner.currentScanline)
 	xor 1
 	ld (ix + PNGScanner.currentScanline),a
@@ -238,7 +228,7 @@ PNGScanner_FilterPaeth: PROC
 NoSwap:
 	push de
 	push hl
-	call Reader_ReadBlock_IY
+	call PNGScanner_ReadBlock
 	exx
 	pop de
 	ld l,(ix + PNGScanner.bytesPerPixelNegated)
@@ -329,3 +319,13 @@ ABS: MACRO ?register
 Done:
 	ENDM
 	ENDP
+
+; de = scanline
+; iy = reader
+; ix = this
+; bc <- bytes read
+PNGScanner_ReadBlock:
+	ld c,(ix + PNGScanner.lineSize)
+	ld b,(ix + PNGScanner.lineSize + 1)
+	call Reader_ReadBlock_IY
+	ret
