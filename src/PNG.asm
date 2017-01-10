@@ -21,13 +21,15 @@ PNG: MACRO
 	interlace:
 		db 0
 	palette:
-		dw PNG_palette
+		dw 0
 	rawDataBuffer:
 		dw 0
 	dataBuffer:
 		dw 0
 	dataWriter:
 		dw 0
+	paletteData:
+		ds 256 * 3
 	ENDM
 
 ; de = reader
@@ -61,6 +63,8 @@ PNG_Construct:
 	call PNG_Validate
 	jp c,PNG_TerminateWithInvalidError
 	call PNG_Process
+	call PNG_ValidatePalette
+	jp c,PNG_TerminateWithInvalidError
 	call PNG_Decompress
 	ret
 
@@ -91,6 +95,20 @@ PNG_GetReaderIY:
 	ld d,(ix + PNG.reader + 1)
 	ld iyl,e
 	ld iyh,d
+	ret
+
+; ix = this
+; f <- nz: palette exists
+PNG_HasPalette:
+	ld a,(ix + PNG.palette + 1)
+	and a
+	ret
+
+; ix = this
+; de <- palette
+PNG_GetPalette:
+	ld e,(ix + PNG.palette)
+	ld d,(ix + PNG.palette + 1)
 	ret
 
 ; ix = this
@@ -272,6 +290,17 @@ Invalid:
 	scf
 	ret
 	ENDP
+
+; ix = this
+; f <- c: invalid
+PNG_ValidatePalette:
+	ld a,(ix + PNG.colorType)
+	sub 3
+	and a
+	ret nz
+	cp (ix + PNG.palette + 1)
+	ccf
+	ret
 
 ; ix = this
 ; bc <- line size
@@ -519,7 +548,9 @@ PrefixPLT:
 ; iy = reader
 ; ix = this
 ; f <- c: not set (end not reached)
-PNG_ProcessPLTEChunk: PROC
+PNG_ProcessPLTEChunk:
+	call PNG_HasPalette
+	jp nz,PNG_TerminateWithInvalidError
 	exx
 	ld a,e
 	or d
@@ -528,29 +559,17 @@ PNG_ProcessPLTEChunk: PROC
 	ld hl,300H
 	sbc hl,de
 	jp c,PNG_TerminateWithInvalidError
+	ld c,e
+	ld b,d
+	ld e,ixl
+	ld d,ixh
+	ld hl,PNG.paletteData
+	add hl,de
 	ex de,hl
-	ld e,(ix + PNG.palette)
-	ld d,(ix + PNG.palette + 1)
-	ld bc,-3
-Loop:
-	call Reader_Read_IY
-	ld (de),a
-	inc d
-	call Reader_Read_IY
-	ld (de),a
-	inc d
-	call Reader_Read_IY
-	ld (de),a
-	dec d
-	dec d
-	inc e
-	add hl,bc
-	jp nc,PNG_TerminateWithInvalidError
-	ld a,h
-	or l
-	jr nz,Loop
+	ld (ix + PNG.palette),e
+	ld (ix + PNG.palette + 1),d
+	call Reader_ReadBlock_IY
 	ret
-	ENDP
 
 ; dehl = name
 ; dehl' = size
@@ -653,11 +672,3 @@ PNG_filter:
 
 PNG_interlace:
 	db "Interlace method: ",0
-
-	SECTION RAM
-
-	ALIGN 100H
-PNG_palette:
-	ds 256 * 3
-
-	ENDS

@@ -4,8 +4,13 @@
 PNGViewer_READER_BASE_ADDRESS: equ 8000H
 
 PNGViewer: MACRO
+	ShowScanline:
+		jp System_ThrowException
+	showScanline: equ $ - 2
 	png:
 		dw 0
+	palette:
+		dw PNGViewer_palette
 	transferPort:
 		db 0
 	vdpCommand:
@@ -16,7 +21,7 @@ PNGViewer: MACRO
 
 ; de = PNG image
 ; ix = this
-PNGViewer_Construct:
+PNGViewer_Construct: PROC
 	ld (ix + PNGViewer.png),e
 	ld (ix + PNGViewer.png + 1),d
 	push ix
@@ -38,8 +43,26 @@ PNGViewer_Construct:
 	ld b,(ix + PNG.height + 1)
 	ld (iy + VDPCommand.ny),c
 	ld (iy + VDPCommand.ny + 1),b
+	ld b,(ix + PNG.colorType)
+	call PNG_HasPalette
 	pop ix
+	push bc
+	call nz,PNGViewer_InitializePalette
+	pop af
+	cp 2
+	jr z,ColorType2
+	cp 3
+	jr z,ColorType3
+	jp PNG_TerminateWithUnsupportedError
+ColorType2:
+	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlineRGB & 0FFH
+	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlineRGB >> 8
 	ret
+ColorType3:
+	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlinePalette & 0FFH
+	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlinePalette >> 8
+	ret
+	ENDP
 
 ; ix = this
 ; ix <- png image
@@ -67,14 +90,47 @@ PNGViewer_GetScanner:
 	ret
 
 ; ix = this
+PNGViewer_InitializePalette: PROC
+	push ix
+	call PNGViewer_GetPNG
+	call PNG_GetPalette
+	pop ix
+	ex de,hl
+	ld c,(ix + PNGViewer.palette)
+	ld b,(ix + PNGViewer.palette + 1)
+	xor a
+Loop:
+	push af
+	ld d,PNGViewer_rgbLUTs >> 8
+	ld e,(hl)
+	ld a,(de)
+	inc hl
+	inc d
+	ld e,(hl)
+	ex de,hl
+	or (hl)
+	ex de,hl
+	inc hl
+	inc d
+	ld e,(hl)
+	ex de,hl
+	or (hl)
+	ex de,hl
+	inc hl
+	ld (bc),a
+	inc bc
+	pop af
+	dec a
+	jr nz,Loop
+	ret
+	ENDP
+
+; ix = this
 PNGViewer_Show: PROC
 	ld a,8
 	call VDP_InitScreen
 	push ix
 	call PNGViewer_GetPNG
-	ld a,(ix + PNG.colorType)
-	cp 2
-	jp nz,PNG_TerminateWithUnsupportedError
 	ld a,(ix + PNG.bitDepth)
 	cp 8
 	jp c,PNG_TerminateWithUnsupportedError
@@ -104,7 +160,13 @@ Loop:
 ; b = width
 ; hl = scanline
 ; ix = this
-PNGViewer_ShowScanline: PROC
+PNGViewer_ShowScanline:
+	jp ix
+
+; b = width
+; hl = scanline
+; ix = this
+PNGViewer_ShowScanlineRGB: PROC
 	ld c,(ix + PNGViewer.transferPort)
 Loop:
 	ld d,PNGViewer_rgbLUTs >> 8
@@ -122,6 +184,21 @@ Loop:
 	ex de,hl
 	or (hl)
 	ex de,hl
+	inc hl
+	call PNGViewer_Transfer
+	djnz Loop
+	ret
+	ENDP
+
+; b = width
+; hl = scanline
+; ix = this
+PNGViewer_ShowScanlinePalette: PROC
+	ld c,(ix + PNGViewer.transferPort)
+	ld d,(ix + PNGViewer.palette + 1)
+Loop:
+	ld e,(hl)
+	ld a,(de)
 	inc hl
 	call PNGViewer_Transfer
 	djnz Loop
@@ -172,5 +249,9 @@ PNGViewer_rgbLUTs:
 	REPT 256, ?value
 	db (?value * 3 + 128) / 255
 	ENDM
+
+	ALIGN 100H
+PNGViewer_palette:
+	ds 256
 
 	ENDS
