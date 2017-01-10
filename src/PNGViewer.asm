@@ -44,11 +44,13 @@ PNGViewer_Construct: PROC
 	ld (iy + VDPCommand.ny),c
 	ld (iy + VDPCommand.ny + 1),b
 	ld b,(ix + PNG.colorType)
+	ld c,(ix + PNG.bitDepth)
 	call PNG_HasPalette
 	pop ix
 	push bc
 	call nz,PNGViewer_InitializePalette
-	pop af
+	pop bc
+	ld a,b
 	cp 2
 	jr z,ColorType2
 	cp 3
@@ -59,8 +61,27 @@ ColorType2:
 	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlineRGB >> 8
 	ret
 ColorType3:
-	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlinePalette & 0FFH
-	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlinePalette >> 8
+	ld a,c
+	cp 2
+	jr c,BitDepth1
+	jr z,BitDepth2
+	cp 4
+	jr z,BitDepth4
+BitDepth8:
+	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlinePalette8Bpp & 0FFH
+	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlinePalette8Bpp >> 8
+	ret
+BitDepth4:
+	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlinePalette4Bpp & 0FFH
+	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlinePalette4Bpp >> 8
+	ret
+BitDepth2:
+	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlinePalette2Bpp & 0FFH
+	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlinePalette2Bpp >> 8
+	ret
+BitDepth1:
+	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlinePalette1Bpp & 0FFH
+	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlinePalette1Bpp >> 8
 	ret
 	ENDP
 
@@ -94,7 +115,9 @@ PNGViewer_InitializePalette: PROC
 	push ix
 	call PNGViewer_GetPNG
 	call PNG_GetPalette
+	ld a,(ix + PNG.bitDepth)
 	pop ix
+	push af
 	ex de,hl
 	ld c,(ix + PNGViewer.palette)
 	ld b,(ix + PNGViewer.palette + 1)
@@ -122,6 +145,34 @@ Loop:
 	pop af
 	dec a
 	jr nz,Loop
+	pop af
+	cp 8
+	ret nc
+	ld e,(ix + PNGViewer.palette)
+	ld d,(ix + PNGViewer.palette + 1)
+	cp 2
+	jr c,BitDepth1
+	jr z,BitDepth2
+BitDepth4:
+	ld hl,16
+	add hl,de
+	ex de,hl
+	ld bc,256 - 16
+	ldir
+	ret
+BitDepth2:
+	ld hl,4
+	add hl,de
+	ex de,hl
+	ld bc,256 - 4
+	ldir
+	ret
+BitDepth1:
+	ld hl,2
+	add hl,de
+	ex de,hl
+	ld bc,256 - 2
+	ldir
 	ret
 	ENDP
 
@@ -131,9 +182,6 @@ PNGViewer_Show: PROC
 	call VDP_InitScreen
 	push ix
 	call PNGViewer_GetPNG
-	ld a,(ix + PNG.bitDepth)
-	cp 8
-	jp c,PNG_TerminateWithUnsupportedError
 	ld a,(ix + PNG.interlace)
 	and a
 	jp nz,PNG_TerminateWithUnsupportedError
@@ -193,7 +241,7 @@ Loop:
 ; b = width
 ; hl = scanline
 ; ix = this
-PNGViewer_ShowScanlinePalette: PROC
+PNGViewer_ShowScanlinePalette8Bpp: PROC
 	ld c,(ix + PNGViewer.transferPort)
 	ld d,(ix + PNGViewer.palette + 1)
 Loop:
@@ -201,6 +249,117 @@ Loop:
 	ld a,(de)
 	inc hl
 	call PNGViewer_Transfer
+	djnz Loop
+	ret
+	ENDP
+
+; b = width
+; hl = scanline
+; ix = this
+PNGViewer_ShowScanlinePalette4Bpp: PROC
+	ld c,(ix + PNGViewer.transferPort)
+	ld d,(ix + PNGViewer.palette + 1)
+Loop:
+	ld a,(hl)
+	rrca
+	rrca
+	rrca
+	rrca
+	ld e,a
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	ld e,(hl)
+	ld a,(de)
+	call PNGViewer_Transfer
+	inc hl
+	djnz Loop
+	ret
+	ENDP
+
+; b = width
+; hl = scanline
+; ix = this
+PNGViewer_ShowScanlinePalette2Bpp: PROC
+	ld c,(ix + PNGViewer.transferPort)
+	ld d,(ix + PNGViewer.palette + 1)
+Loop:
+	ld e,(hl)
+	rlc e
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	inc hl
+	djnz Loop
+	ret
+	ENDP
+
+; b = width
+; hl = scanline
+; ix = this
+PNGViewer_ShowScanlinePalette1Bpp: PROC
+	ld c,(ix + PNGViewer.transferPort)
+	ld d,(ix + PNGViewer.palette + 1)
+Loop:
+	ld e,(hl)
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	dec b
+	ret z
+	rlc e
+	ld a,(de)
+	call PNGViewer_Transfer
+	inc hl
 	djnz Loop
 	ret
 	ENDP
