@@ -35,6 +35,9 @@ PNGViewer_Construct: PROC
 	push ix
 	call PNGViewer_GetVDPCommandIY
 	call PNGViewer_GetPNG
+	ld a,(ix + PNG.interlace)
+	and a
+	jp nz,PNG_TerminateWithUnsupportedError
 	ld c,(ix + PNG.width)
 	ld b,(ix + PNG.width + 1)
 	ld (iy + VDPCommand.nx),c
@@ -182,9 +185,6 @@ PNGViewer_Show: PROC
 	call VDP_InitScreen
 	push ix
 	call PNGViewer_GetPNG
-	ld a,(ix + PNG.interlace)
-	and a
-	jp nz,PNG_TerminateWithUnsupportedError
 	ld b,(ix + PNG.width)
 	ld c,(ix + PNG.height)
 	pop ix
