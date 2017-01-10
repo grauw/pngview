@@ -9,7 +9,7 @@ PNGViewer: MACRO
 	transferPort:
 		db 0
 	vdpCommand:
-		VDPCommand 0, 0, 0, 0, 32, 32, 0, 0, VDPCommand_LMMC
+		VDPCommand 0, 0, 0, 0, 0, 0, 0, 0, VDPCommand_LMMC
 	scanner:
 		PNGScanner
 	ENDM
@@ -27,6 +27,18 @@ PNGViewer_Construct:
 	pop ix
 	ld (ix + PNGViewer.scanner),e
 	ld (ix + PNGViewer.scanner + 1),d
+	push ix
+	call PNGViewer_GetVDPCommandIY
+	call PNGViewer_GetPNG
+	ld c,(ix + PNG.width)
+	ld b,(ix + PNG.width + 1)
+	ld (iy + VDPCommand.nx),c
+	ld (iy + VDPCommand.nx + 1),b
+	ld c,(ix + PNG.height)
+	ld b,(ix + PNG.height + 1)
+	ld (iy + VDPCommand.ny),c
+	ld (iy + VDPCommand.ny + 1),b
+	pop ix
 	ret
 
 ; ix = this
@@ -127,7 +139,6 @@ PNGViewer_Transfer:
 	ret
 
 ; a = color
-; b = width
 ; ix = this
 ; c <- transfer port
 ; Modifies: af
@@ -137,7 +148,6 @@ PNGViewer_ExecuteVDPCommand:
 	push iy
 	push bc
 	call PNGViewer_GetVDPCommandIY
-	ld (iy + VDPCommand.nx),b
 	ld (iy + VDPCommand.color),a
 	call VDPCommand_Execute_IY
 	pop bc
