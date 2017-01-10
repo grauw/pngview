@@ -254,28 +254,24 @@ NoSwap:
 	ex de,hl
 	; hl = Raw(x), de = Raw(x-bpp), hl' = Prior(x), de' = Prior(x-bpp)
 Loop:
-	push bc
-	push de
-	push hl
-	exx
-	ld a,(hl)
-	inc hl
-	exx
-	ld b,a
-	exx
 	ld a,(de)
 	inc de
 	exx
-	ld c,a
-	ld a,(de)
+	ld b,(hl)
+	inc hl
+	ex de,hl
+	ld c,(hl)
+	ex de,hl
+	inc de
+	push de
+	push hl
 	call PNGScanner_PaethPredictor
 	pop hl
 	pop de
-	pop bc
+	exx
 	add a,(hl)
 	ld (hl),a
 	inc hl
-	inc de
 	dec bc
 	ld a,b
 	or c
