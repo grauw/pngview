@@ -4,6 +4,10 @@
 Application: MACRO
 	pngReference:
 		dw 0
+	originalBackgroundColor:
+		db 0
+	originalBorderColor:
+		db 0
 	cli:
 		CLI
 	reader:
@@ -64,6 +68,10 @@ Application_Abort:
 ; ix = this
 ; ix <- this
 Application_Construct:
+	ld a,(BAKCLR)
+	ld (ix + Application.originalBackgroundColor),a
+	ld a,(BDRCLR)
+	ld (ix + Application.originalBorderColor),a
 	push ix
 	call Application_GetCLI
 	call CLI_Construct
@@ -84,6 +92,14 @@ Application_Destruct:
 	call CLI_Destruct
 	pop ix
 	call VDP_InitText
+	ld a,(ix + Application.originalBackgroundColor)
+	ld (BAKCLR),a
+	ld a,(ix + Application.originalBorderColor)
+	ld (BDRCLR),a
+	push ix
+	ld ix,CHGCLR
+	call System_CallBIOS
+	pop ix
 	ret
 
 ; ix = this

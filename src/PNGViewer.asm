@@ -193,6 +193,9 @@ BitDepth1:
 
 ; ix = this
 PNGViewer_Show: PROC
+	ld a,0
+	ld (BAKCLR),a
+	ld (BDRCLR),a
 	ld a,8
 	call VDP_InitScreen
 	ld b,(ix + PNGViewer.width)
