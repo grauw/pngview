@@ -618,13 +618,11 @@ PNG_CheckChunkNameCharacter:
 
 ; ix = this
 PNG_TerminateWithInvalidError:
-	call VDP_InitText
 	ld hl,PNG_invalidPNGError
 	jp System_TerminateWithError
 
 ; ix = this
 PNG_TerminateWithUnsupportedError:
-	call VDP_InitText
 	ld hl,PNG_unsupportedError
 	jp System_TerminateWithError
 

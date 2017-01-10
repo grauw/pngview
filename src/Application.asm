@@ -59,6 +59,7 @@ Application_Abort:
 	call Mapper_Destruct
 	pop bc
 	pop af
+	call VDP_InitText
 	ret
 
 ; ix = this
