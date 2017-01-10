@@ -325,13 +325,16 @@ BitDepth16:
 	add hl,hl
 	jp c,PNG_TerminateWithUnsupportedError
 	jp BitDepthDone
-BitDepth4:
+BitDepth1:
+	inc hl
 	srl h
 	rr l
 BitDepth2:
+	inc hl
 	srl h
 	rr l
-BitDepth1:
+BitDepth4:
+	inc hl
 	srl h
 	rr l
 BitDepth8:
