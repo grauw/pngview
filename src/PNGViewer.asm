@@ -130,9 +130,7 @@ PNGViewer_InitializePalette: PROC
 	push ix
 	call PNGViewer_GetPNG
 	call PNG_GetPalette
-	ld a,(ix + PNG.bitDepth)
 	pop ix
-	push af
 	ex de,hl
 	ld c,(ix + PNGViewer.palette)
 	ld b,(ix + PNGViewer.palette + 1)
@@ -160,7 +158,17 @@ Loop:
 	pop af
 	dec a
 	jr nz,Loop
-	pop af
+	call PNGViewer_MirrorPalette
+	ret
+	ENDP
+
+; ix = this
+PNGViewer_MirrorPalette: PROC
+	push ix
+	call PNGViewer_GetPNG
+	call PNG_GetPalette
+	ld a,(ix + PNG.bitDepth)
+	pop ix
 	cp 8
 	ret nc
 	ld e,(ix + PNGViewer.palette)
