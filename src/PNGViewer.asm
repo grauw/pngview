@@ -15,6 +15,8 @@ PNGViewer: MACRO
 		db 0
 	vdpCommand:
 		VDPCommand 0, 0, 0, 0, 0, 0, 0, 0, VDPCommand_LMMC
+	width: equ vdpCommand + VDPCommand.nx
+	height: equ vdpCommand + VDPCommand.ny
 	scanner:
 		PNGScanner
 	ENDM
@@ -183,11 +185,8 @@ BitDepth1:
 PNGViewer_Show: PROC
 	ld a,8
 	call VDP_InitScreen
-	push ix
-	call PNGViewer_GetPNG
-	ld b,(ix + PNG.width)
-	ld c,(ix + PNG.height)
-	pop ix
+	ld b,(ix + PNGViewer.width)
+	ld c,(ix + PNGViewer.height)
 Loop:
 	push bc
 	push ix
