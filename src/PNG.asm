@@ -27,7 +27,7 @@ PNG: MACRO
 	dataBuffer:
 		dw 0
 	dataWriter:
-		MappedWriter
+		dw 0
 	ENDM
 
 ; de = reader
