@@ -268,7 +268,7 @@ Loop:
 	exx
 	ld c,a
 	ld a,(de)
-	call PaethPredictor
+	call PNGScanner_PaethPredictor
 	pop hl
 	pop de
 	pop bc
@@ -282,7 +282,14 @@ Loop:
 	jp nz,Loop
 	pop hl
 	ret
-PaethPredictor:
+	ENDP
+
+; a = Raw(x-bpp)
+; b = Prior(x)
+; c = Prior(x-bpp)
+; a <- value
+; Modifies: de, hl
+PNGScanner_PaethPredictor: PROC
 	ld l,a
 	add a,b
 	jr c,AddOverflow
