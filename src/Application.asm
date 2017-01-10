@@ -57,9 +57,9 @@ Application_Abort:
 	call Application_Destruct
 	ld ix,Mapper_instance
 	call Mapper_Destruct
+	call VDP_InitText
 	pop bc
 	pop af
-	call VDP_InitText
 	ret
 
 ; ix = this
