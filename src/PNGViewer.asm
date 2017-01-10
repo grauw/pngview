@@ -407,8 +407,6 @@ PNGViewer_ExecuteVDPCommand:
 	ret
 
 ;
-	SECTION RAM
-
 	ALIGN 100H
 PNGViewer_rgbLUTs:
 	REPT 256, ?value
@@ -420,6 +418,8 @@ PNGViewer_rgbLUTs:
 	REPT 256, ?value
 	db (?value * 3 + 128) / 255
 	ENDM
+
+	SECTION RAM
 
 	ALIGN 100H
 PNGViewer_palette:
