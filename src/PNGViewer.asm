@@ -66,11 +66,17 @@ NoCropHeight:
 	call nz,PNGViewer_InitializePalette
 	pop bc
 	ld a,b
+	cp 0
+	jr z,ColorType0
 	cp 2
 	jr z,ColorType2
 	cp 3
 	jr z,ColorType3
 	jp PNG_TerminateWithUnsupportedError
+ColorType0:
+	call ColorType3
+	call PNGViewer_InitializePaletteGrayscale
+	ret
 ColorType2:
 	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlineRGB & 0FFH
 	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlineRGB >> 8
@@ -158,6 +164,52 @@ Loop:
 	pop af
 	dec a
 	jr nz,Loop
+	call PNGViewer_MirrorPalette
+	ret
+	ENDP
+
+; ix = this
+PNGViewer_InitializePaletteGrayscale: PROC
+	push ix
+	call PNGViewer_GetPNG
+	ld a,(ix + PNG.bitDepth)
+	pop ix
+	ld e,(ix + PNGViewer.palette)
+	ld d,(ix + PNGViewer.palette + 1)
+	cp 2
+	jr c,BitDepth1
+	jr z,BitDepth2
+	cp 8
+	jr c,BitDepth4
+BitDepth8:
+	ld l,0
+BitDepth8Loop:
+	ld h,PNGViewer_rgbLUTs >> 8
+	ld a,(hl)
+	inc h
+	or (hl)
+	inc h
+	or (hl)
+	ld (de),a
+	inc de
+	inc l
+	jr nz,BitDepth8Loop
+	ret
+BitDepth4:
+	ld hl,PNGViewer_grayscaleLUT4Bpp
+	ld bc,16
+	ldir
+	call PNGViewer_MirrorPalette
+BitDepth2:
+	ld hl,PNGViewer_grayscaleLUT2Bpp
+	ld bc,4
+	ldir
+	call PNGViewer_MirrorPalette
+BitDepth1:
+	ex de,hl
+	ld (hl),0
+	inc hl
+	ld (hl),255
 	call PNGViewer_MirrorPalette
 	ret
 	ENDP
@@ -415,6 +467,14 @@ PNGViewer_ExecuteVDPCommand:
 	ret
 
 ;
+PNGViewer_grayscaleLUT2Bpp:
+	db 00000000B, 01001001B, 10010010B, 11111111B
+
+PNGViewer_grayscaleLUT4Bpp:
+	REPT 16, ?value
+	db (?value * 7 + 8) / 15 << 2 | (?value * 7 + 8) / 15 << 5 | (?value * 3 + 8) / 15
+	ENDM
+
 	ALIGN 100H
 PNGViewer_rgbLUTs:
 	REPT 256, ?value
