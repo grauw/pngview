@@ -472,7 +472,7 @@ PNGViewer_grayscaleLUT2Bpp:
 
 PNGViewer_grayscaleLUT4Bpp:
 	REPT 16, ?value
-	db (?value * 7 + 8) / 15 << 2 | (?value * 7 + 8) / 15 << 5 | (?value * 3 + 8) / 15
+	db (?value * 7 + 8) / 15 << 2 | (?value * 7 + 8) / 15 << 5 | (?value < 3 ? 0 : ?value < 7 ? 1 : ?value < 12 ? 2 : 3)
 	ENDM
 
 	ALIGN 100H
@@ -484,7 +484,7 @@ PNGViewer_rgbLUTs:
 	db (?value * 7 + 128) / 255 << 5
 	ENDM
 	REPT 256, ?value
-	db (?value * 3 + 128) / 255
+	db ?value < 37 ? 0 : ?value < 110 ? 1 : ?value < 201 ? 2 : 3
 	ENDM
 
 	SECTION RAM
