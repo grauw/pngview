@@ -72,6 +72,8 @@ NoCropHeight:
 	jr z,ColorType2
 	cp 3
 	jr z,ColorType3
+	cp 4
+	jr z,ColorType4
 	jp PNG_TerminateWithUnsupportedError
 ColorType0:
 	call ColorType3
@@ -80,6 +82,11 @@ ColorType0:
 ColorType2:
 	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlineRGB & 0FFH
 	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlineRGB >> 8
+	ret
+ColorType4:
+	ld (ix + PNGViewer.showScanline),PNGViewer_ShowScanlineGrayscaleAlpha & 0FFH
+	ld (ix + PNGViewer.showScanline + 1),PNGViewer_ShowScanlineGrayscaleAlpha >> 8
+	call PNGViewer_InitializePaletteGrayscale
 	ret
 ColorType3:
 	ld a,c
@@ -432,6 +439,28 @@ Loop:
 	ld a,(de)
 	call PNGViewer_Transfer
 	inc hl
+	djnz Loop
+	ret
+	ENDP
+
+; b = width
+; hl = scanline
+; ix = this
+PNGViewer_ShowScanlineGrayscaleAlpha: PROC
+	ld c,(ix + PNGViewer.transferPort)
+	ld d,(ix + PNGViewer.palette + 1)
+Loop:
+	ld e,(hl)
+	ld a,(de)
+	inc hl
+	ld e,a
+	ld a,(hl)
+	inc hl
+	and a
+	jr z,Transparent
+	ld a,e
+Transparent:
+	call PNGViewer_Transfer
 	djnz Loop
 	ret
 	ENDP
