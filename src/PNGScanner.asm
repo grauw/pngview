@@ -137,10 +137,9 @@ Loop:
 	ld (de),a
 	inc hl
 	inc de
-	dec bc
-	ld a,b
-	or c
-	jp nz,Loop
+	djnz Loop
+	dec c
+	jr nz,Loop
 	pop hl
 	ret
 	ENDP
@@ -171,10 +170,9 @@ Loop:
 	ld (hl),a
 	inc hl
 	inc de
-	dec bc
-	ld a,b
-	or c
-	jp nz,Loop
+	djnz Loop
+	dec c
+	jr nz,Loop
 	pop hl
 	ret
 	ENDP
@@ -216,10 +214,9 @@ Loop:
 	ld (hl),a
 	inc hl
 	inc de
-	dec bc
-	ld a,b
-	or c
-	jp nz,Loop
+	djnz Loop
+	dec c
+	jr nz,Loop
 	pop hl
 	ret
 	ENDP
@@ -273,10 +270,9 @@ Loop:
 	add a,(hl)
 	ld (hl),a
 	inc hl
-	dec bc
-	ld a,b
-	or c
-	jp nz,Loop
+	djnz Loop
+	dec c
+	jr nz,Loop
 	pop hl
 	ret
 	ENDP
@@ -334,27 +330,32 @@ Done:
 ; de = scanline
 ; iy = reader
 ; ix = this
-; bc <- bytes read
+; bc <- bytes read (nested 8-bit loop format)
 PNGScanner_ReadBlock:
 	ld c,(ix + PNGScanner.lineSize)
 	ld b,(ix + PNGScanner.lineSize + 1)
 	bit 4,(ix + PNGScanner.bitDepth)
 	jp nz,PNGScanner_ReadBlock16Bpp
 	call Reader_ReadBlock_IY
+	ld a,c
+	dec bc
+	inc b
+	ld c,b
+	ld b,a
 	ret
 
 ; bc = line size
 ; de = scanline
 ; iy = reader
 ; ix = this
-; bc <- bytes read
+; bc <- bytes read (nested 8-bit loop format)
 PNGScanner_ReadBlock16Bpp: PROC
-	push bc
 	ld a,c
 	dec bc
 	inc b
 	ld c,b
 	ld b,a
+	push bc
 Loop:
 	call Reader_Read_IY
 	ld (de),a
