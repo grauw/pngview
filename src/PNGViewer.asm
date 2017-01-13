@@ -457,15 +457,17 @@ PNGViewer_ShowScanlineGrayscaleAlpha: PROC
 	ld d,(ix + PNGViewer.palette + 1)
 Loop:
 	ld e,(hl)
-	ld a,(de)
 	inc hl
-	ld e,a
 	ld a,(hl)
 	inc hl
-	and a
-	jr z,Transparent
-	ld a,e
-Transparent:
+	push hl
+	push de
+	ld h,a
+	call PNGViewer_MultiplyAlpha
+	pop de
+	ld e,h
+	pop hl
+	ld a,(de)
 	call PNGViewer_Transfer
 	djnz Loop
 	ret
@@ -504,6 +506,26 @@ Transparent:
 	djnz Loop
 	ret
 	ENDP
+
+; Multiply 8-bit values representing 0..1 fractions (Z80 version)
+; e = multiplicand (0..255 representing 0..1)
+; h = multiplicand (0..255 representing 0..1)
+; h <- product (0..255 representing 0..1)
+; Modifies: de, l
+PNGViewer_MultiplyAlpha:
+	ld d,0
+	ld l,d
+	REPT 8
+	add hl,hl
+	jr nc,NoAdd
+	add hl,de
+NoAdd:
+	ENDM
+	ld e,128
+	add hl,de
+	ld e,h
+	add hl,de
+	ret
 
 ; a = color
 ; c = transfer I/O port
