@@ -42,22 +42,34 @@ PNGViewer_Construct: PROC
 	jp nz,PNG_TerminateWithUnsupportedError
 	ld c,(ix + PNG.width)
 	ld b,(ix + PNG.width + 1)
-	ld hl,-256
-	add hl,bc
+	and a
+	ld hl,256
+	sbc hl,bc
 	jr nc,NoCropWidth
 	ld bc,256
+	ld hl,0
 NoCropWidth:
+	srl h
+	rr l
 	ld (iy + VDPCommand.nx),c
 	ld (iy + VDPCommand.nx + 1),b
+	ld (iy + VDPCommand.dx),l
+	ld (iy + VDPCommand.dx + 1),h
 	ld c,(ix + PNG.height)
 	ld b,(ix + PNG.height + 1)
-	ld hl,-212
-	add hl,bc
+	and a
+	ld hl,212
+	sbc hl,bc
 	jr nc,NoCropHeight
 	ld bc,212
+	ld hl,0
 NoCropHeight:
+	srl h
+	rr l
 	ld (iy + VDPCommand.ny),c
 	ld (iy + VDPCommand.ny + 1),b
+	ld (iy + VDPCommand.dy),l
+	ld (iy + VDPCommand.dy + 1),h
 	ld b,(ix + PNG.colorType)
 	ld c,(ix + PNG.bitDepth)
 	call PNG_HasPalette
