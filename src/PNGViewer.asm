@@ -313,20 +313,17 @@ PNGViewer_Show: PROC
 	ld (BDRCLR),a
 	ld a,8
 	call VDP_InitScreen
-	ld b,(ix + PNGViewer.width)
-	ld c,(ix + PNGViewer.height)
+	ld b,(ix + PNGViewer.height)
 Loop:
 	push bc
 	push ix
 	call PNGViewer_GetScanner
 	call PNGScanner_ReadScanline
 	pop ix
-	pop bc
-	push bc
+	ld b,(ix + PNGViewer.width)
 	call PNGViewer_ShowScanline
 	pop bc
-	dec c
-	jr nz,Loop
+	djnz Loop
 	call DOS_ConsoleInputWithoutEcho
 	call VDP_InitText
 	ret
