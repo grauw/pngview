@@ -30,6 +30,8 @@ PNG: MACRO
 		dw 0
 	paletteData:
 		ds 256 * 3
+	transparencyData:
+		ds 256,255
 	ENDM
 
 ; de = reader
@@ -109,6 +111,15 @@ PNG_HasPalette:
 PNG_GetPalette:
 	ld e,(ix + PNG.palette)
 	ld d,(ix + PNG.palette + 1)
+	ret
+
+; ix = this
+; hl <- transparency
+PNG_GetTransparency:
+	ld e,ixl
+	ld d,ixh
+	ld hl,PNG.transparencyData
+	add hl,de
 	ret
 
 ; ix = this
@@ -501,6 +512,8 @@ PNG_ProcessChunk: PROC
 	jr z,PrefixI
 	cp "P"
 	jr z,PrefixP
+	cp "t"
+	jr z,Prefixt
 	jp PNG_ProcessUnknownChunk
 PrefixI:
 	ld a,e
@@ -513,6 +526,11 @@ PrefixP:
 	ld a,e
 	cp "L"
 	jr z,PrefixPL
+	jp PNG_ProcessUnknownChunk
+Prefixt:
+	ld a,e
+	cp "R"
+	jr z,PrefixtR
 	jp PNG_ProcessUnknownChunk
 PrefixID:
 	ld a,h
@@ -529,6 +547,11 @@ PrefixPL:
 	cp "T"
 	jr z,PrefixPLT
 	jp PNG_ProcessUnknownChunk
+PrefixtR:
+	ld a,h
+	cp "N"
+	jr z,PrefixtRN
+	jp PNG_ProcessUnknownChunk
 PrefixIDA:
 	ld a,l
 	cp "T"
@@ -543,6 +566,11 @@ PrefixPLT:
 	ld a,l
 	cp "E"
 	jr z,PNG_ProcessPLTEChunk
+	jp PNG_ProcessUnknownChunk
+PrefixtRN:
+	ld a,l
+	cp "S"
+	jr z,PNG_ProcessTRNSChunk
 	jp PNG_ProcessUnknownChunk
 	ENDP
 
@@ -571,6 +599,28 @@ PNG_ProcessPLTEChunk:
 	ex de,hl
 	ld (ix + PNG.palette),e
 	ld (ix + PNG.palette + 1),d
+	call Reader_ReadBlock_IY
+	and a
+	ret
+
+; dehl = name
+; dehl' = size
+; iy = reader
+; ix = this
+; f <- c: not set (end not reached)
+PNG_ProcessTRNSChunk:
+	exx
+	ld a,e
+	or d
+	jp nz,PNG_TerminateWithInvalidError
+	ex de,hl
+	ld hl,100H
+	sbc hl,de
+	jp c,PNG_TerminateWithInvalidError
+	ld c,e
+	ld b,d
+	call PNG_GetTransparency
+	ex de,hl
 	call Reader_ReadBlock_IY
 	and a
 	ret

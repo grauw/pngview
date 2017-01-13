@@ -148,6 +148,7 @@ PNGViewer_GetScanner:
 PNGViewer_InitializePalette: PROC
 	push ix
 	call PNGViewer_GetPNG
+	call PNG_GetTransparency
 	call PNG_GetPalette
 	pop ix
 	ex de,hl
@@ -156,22 +157,51 @@ PNGViewer_InitializePalette: PROC
 	xor a
 Loop:
 	push af
-	ld d,PNGViewer_rgbLUTs >> 8
-	ld e,(hl)
+	push bc
 	ld a,(de)
+	inc de
+	push de
+	ld d,(hl)
 	inc hl
-	inc d
-	ld e,(hl)
-	ex de,hl
+	ld b,(hl)
+	inc hl
+	ld c,(hl)
+	inc hl
+	push hl
+	inc a
+	jr z,Opaque
+	dec a
+	jr z,Transparent
+	ld e,a
+	ld h,b
+	push de
+	call PNGViewer_MultiplyAlpha
+	pop de
+	ld b,h
+	ld h,c
+	push de
+	call PNGViewer_MultiplyAlpha
+	pop de
+	ld c,h
+	ld h,d
+	push de
+	call PNGViewer_MultiplyAlpha
+	pop de
+	ld d,h
+Opaque:
+	ld h,PNGViewer_rgbLUTs >> 8
+	ld l,d
+	ld a,(hl)
+	ld l,b
+	inc h
 	or (hl)
-	ex de,hl
-	inc hl
-	inc d
-	ld e,(hl)
-	ex de,hl
+	ld l,c
+	inc h
 	or (hl)
-	ex de,hl
-	inc hl
+Transparent:
+	pop hl
+	pop de
+	pop bc
 	ld (bc),a
 	inc bc
 	pop af
