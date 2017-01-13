@@ -479,29 +479,41 @@ Loop:
 PNGViewer_ShowScanlineRGBA: PROC
 	ld c,(ix + PNGViewer.transferPort)
 Loop:
-	ld d,PNGViewer_rgbLUTs >> 8
-	ld e,(hl)
-	ld a,(de)
+	push bc
+	ld d,(hl)
 	inc hl
-	inc d
-	ld e,(hl)
-	ex de,hl
-	or (hl)
-	ex de,hl
+	ld b,(hl)
 	inc hl
-	inc d
-	ld e,(hl)
-	ex de,hl
-	or (hl)
-	ex de,hl
+	ld c,(hl)
 	inc hl
-	ld e,a
+	ld e,(hl)
+	inc hl
+	push hl
+	ld h,b
+	push de
+	call PNGViewer_MultiplyAlpha
+	pop de
+	ld b,h
+	ld h,c
+	push de
+	call PNGViewer_MultiplyAlpha
+	pop de
+	ld c,h
+	ld h,d
+	push de
+	call PNGViewer_MultiplyAlpha
+	pop de
+	ld l,h
+	ld h,PNGViewer_rgbLUTs >> 8
 	ld a,(hl)
-	inc hl
-	and a
-	jr z,Transparent
-	ld a,e
-Transparent:
+	ld l,b
+	inc h
+	or (hl)
+	ld l,c
+	inc h
+	or (hl)
+	pop hl
+	pop bc
 	call PNGViewer_Transfer
 	djnz Loop
 	ret
