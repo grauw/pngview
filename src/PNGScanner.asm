@@ -64,10 +64,6 @@ Not16Bpp:
 	ld (ix + PNGScanner.lineSize + 1),h
 	neg
 	ld (ix + PNGScanner.bytesPerPixelNegated),a
-	ld bc,PNGScanner_MAX_LINESIZE
-	scf
-	sbc hl,bc
-	jp nc,PNG_TerminateWithUnsupportedError
 	ld e,ixl
 	ld d,ixh
 	ret
@@ -331,9 +327,29 @@ Done:
 ; iy = reader
 ; ix = this
 ; bc <- bytes read (nested 8-bit loop format)
-PNGScanner_ReadBlock:
+PNGScanner_ReadBlock: PROC
 	ld c,(ix + PNGScanner.lineSize)
 	ld b,(ix + PNGScanner.lineSize + 1)
+	ld hl,-PNGScanner_MAX_LINESIZE - 1
+	add hl,bc
+	jr nc,Read
+	inc hl
+	push hl
+	ld bc,PNGScanner_MAX_LINESIZE
+	call Read
+	pop hl
+	push bc
+	bit 4,(ix + PNGScanner.bitDepth)
+	jr z,No16Bpp
+	add hl,hl
+	call c,System_ThrowException
+No16Bpp:
+	ld c,l
+	ld b,h
+	call Reader_Skip_IY
+	pop bc
+	ret
+Read:
 	bit 4,(ix + PNGScanner.bitDepth)
 	jp nz,PNGScanner_ReadBlock16Bpp
 	call Reader_ReadBlock_IY
@@ -343,6 +359,7 @@ PNGScanner_ReadBlock:
 	ld c,b
 	ld b,a
 	ret
+	ENDP
 
 ; bc = line size
 ; de = scanline
