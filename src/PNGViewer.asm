@@ -460,6 +460,10 @@ Loop:
 	inc hl
 	ld a,(hl)
 	inc hl
+	inc a
+	jr z,Opaque
+	dec a
+	jr z,Transparent
 	push hl
 	push de
 	ld h,a
@@ -467,7 +471,9 @@ Loop:
 	pop de
 	ld e,h
 	pop hl
+Opaque:
 	ld a,(de)
+Transparent:
 	call PNGViewer_Transfer
 	djnz Loop
 	ret
@@ -486,9 +492,14 @@ Loop:
 	inc hl
 	ld c,(hl)
 	inc hl
-	ld e,(hl)
+	ld a,(hl)
 	inc hl
 	push hl
+	inc a
+	jr z,Opaque
+	dec a
+	jr z,Transparent
+	ld e,a
 	ld h,b
 	push de
 	call PNGViewer_MultiplyAlpha
@@ -503,8 +514,10 @@ Loop:
 	push de
 	call PNGViewer_MultiplyAlpha
 	pop de
-	ld l,h
+	ld d,h
+Opaque:
 	ld h,PNGViewer_rgbLUTs >> 8
+	ld l,d
 	ld a,(hl)
 	ld l,b
 	inc h
@@ -512,6 +525,7 @@ Loop:
 	ld l,c
 	inc h
 	or (hl)
+Transparent:
 	pop hl
 	pop bc
 	call PNGViewer_Transfer
