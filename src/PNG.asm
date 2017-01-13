@@ -509,35 +509,35 @@ PrefixI:
 	cp "E"
 	jr z,PrefixIE
 	jp PNG_ProcessUnknownChunk
+PrefixP:
+	ld a,e
+	cp "L"
+	jr z,PrefixPL
+	jp PNG_ProcessUnknownChunk
 PrefixID:
 	ld a,h
 	cp "A"
 	jr z,PrefixIDA
-	jp PNG_ProcessUnknownChunk
-PrefixIDA:
-	ld a,l
-	cp "T"
-	jr z,PNG_ProcessIDATChunk
 	jp PNG_ProcessUnknownChunk
 PrefixIE:
 	ld a,h
 	cp "N"
 	jr z,PrefixIEN
 	jp PNG_ProcessUnknownChunk
-PrefixIEN:
-	ld a,l
-	cp "D"
-	jr z,PNG_ProcessIENDChunk
-	jp PNG_ProcessUnknownChunk
-PrefixP:
-	ld a,e
-	cp "L"
-	jr z,PrefixPL
-	jp PNG_ProcessUnknownChunk
 PrefixPL:
 	ld a,h
 	cp "T"
 	jr z,PrefixPLT
+	jp PNG_ProcessUnknownChunk
+PrefixIDA:
+	ld a,l
+	cp "T"
+	jr z,PNG_ProcessIDATChunk
+	jp PNG_ProcessUnknownChunk
+PrefixIEN:
+	ld a,l
+	cp "D"
+	jr z,PNG_ProcessIENDChunk
 	jp PNG_ProcessUnknownChunk
 PrefixPLT:
 	ld a,l
