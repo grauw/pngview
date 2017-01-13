@@ -572,6 +572,7 @@ PNG_ProcessPLTEChunk:
 	ld (ix + PNG.palette),e
 	ld (ix + PNG.palette + 1),d
 	call Reader_ReadBlock_IY
+	and a
 	ret
 
 ; dehl = name
