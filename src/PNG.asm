@@ -244,15 +244,15 @@ PNG_Validate: PROC
 	jr nz,Invalid
 	ld a,(ix + PNG.colorType)
 	and a
-	jp z,ColorType0
+	jr z,ColorType0
 	cp 2
-	jp z,ColorType2
+	jr z,ColorType2
 	cp 3
-	jp z,ColorType3
+	jr z,ColorType3
 	cp 4
-	jp z,ColorType4
+	jr z,ColorType4
 	cp 6
-	jp z,ColorType6
+	jr z,ColorType6
 	jr Invalid
 ColorType0:
 	ld a,(ix + PNG.bitDepth)
@@ -486,7 +486,7 @@ Loop:
 	push af
 	call Reader_ReadDoubleWordBE_IY  ; skip crc
 	pop af
-	jp nc,Loop
+	jr nc,Loop
 	ret
 	ENDP
 
