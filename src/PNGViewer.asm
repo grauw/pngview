@@ -572,7 +572,7 @@ Transparent:
 	ret
 	ENDP
 
-; Multiply 8-bit values representing 0..1 fractions (Z80 version)
+; Multiply 8-bit values representing 0..1 fractions
 ; e = multiplicand (0..255 representing 0..1)
 ; h = multiplicand (0..255 representing 0..1)
 ; h <- product (0..255 representing 0..1)
