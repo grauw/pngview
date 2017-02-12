@@ -307,12 +307,19 @@ BitDepth1:
 	ENDP
 
 ; ix = this
-PNGViewer_Show: PROC
+PNGViewer_Show:
 	ld a,0
 	ld (BAKCLR),a
 	ld (BDRCLR),a
 	ld a,8
 	call VDP_InitScreen
+	call PNGViewer_ShowProgressive
+	call DOS_ConsoleInputWithoutEcho
+	call VDP_InitText
+	ret
+
+; ix = this
+PNGViewer_ShowProgressive: PROC
 	ld b,(ix + PNGViewer.height)
 Loop:
 	push bc
@@ -324,8 +331,6 @@ Loop:
 	call PNGViewer_ShowScanline
 	pop bc
 	djnz Loop
-	call DOS_ConsoleInputWithoutEcho
-	call VDP_InitText
 	ret
 	ENDP
 
