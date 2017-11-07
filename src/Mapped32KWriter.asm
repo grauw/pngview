@@ -34,11 +34,13 @@ Mapped32KWriter_Construct:
 	ld de,Mapped32KWriter_Flush
 	call Writer_Construct
 
-	call Memory_GetSlotPage1
+	ld h,40H
+	call Memory_GetSlot
 	ld (ix + Mapped32KWriter.originalSlot1),a
 	call Mapper_instance.GetP1
 	ld (ix + Mapped32KWriter.originalMapperBank1),a
-	call Memory_GetSlotPage2
+	ld h,80H
+	call Memory_GetSlot
 	ld (ix + Mapped32KWriter.originalSlot2),a
 	call Mapper_instance.GetP2
 	ld (ix + Mapped32KWriter.originalMapperBank2),a
@@ -57,11 +59,13 @@ Mapped32KWriter_Construct:
 ; ix = this
 Mapped32KWriter_Destruct:
 	ld a,(ix + Mapped32KWriter.originalSlot1)
-	call Memory_SetSlotPage1
+	ld h,40H
+	call Memory_SetSlot
 	ld a,(ix + Mapped32KWriter.originalMapperBank1)
 	call Mapper_instance.PutP1
 	ld a,(ix + Mapped32KWriter.originalSlot2)
-	call Memory_SetSlotPage2
+	ld h,80H
+	call Memory_SetSlot
 	ld a,(ix + Mapped32KWriter.originalMapperBank2)
 	call Mapper_instance.PutP2
 	ret
