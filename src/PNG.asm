@@ -463,7 +463,7 @@ PNG_Decompress:
 	ld d,ixh
 	ex (sp),ix  ; sp = this, reader, ix = this
 	push ix
-	ld a,-1
+	ld a,ZLIB_ADLER32 ? -1 : 0
 	call ZlibArchive_class.New
 	call ZlibArchive_Construct
 	ex (sp),ix  ; sp = this, reader, zlibarchive, ix = this
