@@ -21,13 +21,19 @@ Application: MACRO
 
 ;
 Application_Main:
-	ld hl,DOS_Terminate
-	call System_SetTerminateHandler
+	ld ix,Mapper_instance
+	call Mapper_Construct
 
-	call DOS_IsDOS2
-	ld hl,Application_dos2RequiredError
-	jp c,System_TerminateWithError
+	ld hl,Application_MainContinue
+	call System_TryCall
 
+	ld ix,Mapper_instance
+	call Mapper_Destruct
+
+	call System_Rethrow
+	ret
+
+Application_MainContinue:
 	call Application_CheckStack
 
 	call VDP_InitMirrorsOnVDPUpgrades
@@ -35,8 +41,6 @@ Application_Main:
 	ld hl,Application_welcome
 	call System_Print
 
-	ld ix,Mapper_instance
-	call Mapper_Construct
 	ld ix,Heap_main
 	call Heap_Construct
 
@@ -45,24 +49,14 @@ Application_Main:
 
 	ld ix,Application_instance
 	call Application_Construct
-	ld de,Application_Abort
-	call DOS_DefineAbortExitRoutine
-	call Application_EnterMainLoop
-	call Application_Abort
-	ret
 
-; DOS error or abort handler
-Application_Abort:
-	push af
-	push bc
-	ld ix,Mapper_instance
-	call Mapper_RestoreInitialState
-	ld ix,Application_instance
+	push ix
+	ld hl,Application_EnterMainLoop
+	call System_TryCall
+	pop ix
+
 	call Application_Destruct
-	ld ix,Mapper_instance
-	call Mapper_Destruct
-	pop bc
-	pop af
+	call System_Rethrow
 	ret
 
 ; ix = this
@@ -156,7 +150,7 @@ Application_ParseCLI:
 	ld a,l
 	or h
 	ld hl,Application_usageInstructions
-	jp z,System_TerminateWithError
+	jp z,System_ThrowExceptionWithMessage
 	pop ix
 	ret
 
@@ -225,29 +219,13 @@ Application_CheckStack:
 	ld hl,-(HEAP + HEAP_SIZE + STACK_SIZE)
 	add hl,sp
 	ld hl,Application_insufficientTPAError
-	jp nc,System_TerminateWithError
+	jp nc,System_ThrowExceptionWithMessage
 	ret
-
-; a = DOS error code
-Application_CheckDOSError:
-	and a
-	ret z
-Application_TerminateWithDOSError:
-	ld b,a
-	ld de,Application_explainBuffer
-	call DOS_ExplainErrorCode
-	ld hl,Application_explainBuffer
-	call System_Print
-	call System_PrintCrLf
-	jp System_TerminateWithError
 
 ;
 	SECTION RAM
 
 Application_instance: Application
-
-Application_explainBuffer:
-	ds 64,0
 
 	ENDS
 
@@ -262,9 +240,6 @@ Application_dotDotDot:
 
 Application_showing:
 	db 13,10,"Showing...",13,10,0
-
-Application_dos2RequiredError:
-	db "MSX-DOS 2 is required.",13,10,0
 
 Application_insufficientTPAError:
 	db "Insufficient TPA space.",13,10,0

@@ -473,16 +473,21 @@ PNG_Decompress:
 	ld e,ixl
 	ld d,ixh
 	ex (sp),ix  ; sp = this, reader, writer, ix = zlibarchive
-	call ZlibArchive_Extract
-	call ZlibArchive_Destruct
-	call ZlibArchive_class.Delete
+	push ix
+	ld hl,ZlibArchive_Extract
+	call System_TryCall
 	pop ix
+	ex (sp),ix
 	call Mapped32KWriter_Destruct
 	call Mapped32KWriter_class.Delete
+	pop ix
+	call ZlibArchive_Destruct
+	call ZlibArchive_class.Delete
 	pop ix
 	call IndirectMappedReader_Destruct
 	call IndirectMappedReader_class.Delete
 	pop ix
+	call System_Rethrow
 	ret
 
 ; ix = this
@@ -692,12 +697,12 @@ PNG_CheckChunkNameCharacter:
 ; ix = this
 PNG_TerminateWithInvalidError:
 	ld hl,PNG_invalidPNGError
-	jp System_TerminateWithError
+	jp System_ThrowExceptionWithMessage
 
 ; ix = this
 PNG_TerminateWithUnsupportedError:
 	ld hl,PNG_unsupportedError
-	jp System_TerminateWithError
+	jp System_ThrowExceptionWithMessage
 
 ;
 PNG_invalidPNGError:

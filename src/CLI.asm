@@ -70,7 +70,7 @@ CLI_ParseOption: PROC
 	ld a,(de)
 	and 11011111B  ; upper-case
 	ld hl,CLI_unknownOptionError
-	jp System_TerminateWithError
+	jp System_ThrowExceptionWithMessage
 Next:
 	ld a,(de)
 	and a
@@ -78,7 +78,7 @@ Next:
 	cp " "
 	ret z
 	ld hl,CLI_unknownOptionError
-	jp System_TerminateWithError
+	jp System_ThrowExceptionWithMessage
 	ENDP
 
 ; de = buffer position
@@ -87,7 +87,7 @@ CLI_ParsePath:
 	ld a,(ix + CLI.path)
 	or (ix + CLI.path + 1)
 	ld hl,CLI_multiplePathsError
-	jp nz,System_TerminateWithError
+	jp nz,System_ThrowExceptionWithMessage
 	ld (ix + CLI.path),e
 	ld (ix + CLI.path + 1),d
 	call DOS_ParsePathname

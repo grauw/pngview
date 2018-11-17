@@ -27,7 +27,7 @@ MappedBufferLoader_Construct:
 	pop de
 	ld a,00000001B  ; read-only
 	call DOS_OpenFileHandle
-	call Application_CheckDOSError
+	call DOS_TerminateIfError
 	ld (ix + MappedBufferLoader.fileHandle),b
 	ret
 
@@ -35,7 +35,7 @@ MappedBufferLoader_Construct:
 MappedBufferLoader_Destruct:
 	ld b,(ix + MappedBufferLoader.fileHandle)
 	call DOS_CloseFileHandle
-	call Application_CheckDOSError
+	call DOS_TerminateIfError
 	push ix
 	call MappedBufferLoader_GetWriter
 	call Writer_FinishBlock
@@ -68,7 +68,7 @@ MappedBufferLoader_Load:
 	call DOS_ReadFromFileHandle
 	cp .EOF
 	ret z
-	call Application_CheckDOSError
+	call DOS_TerminateIfError
 	push af
 	push ix
 	call MappedBufferLoader_GetWriter
@@ -89,7 +89,7 @@ MappedBufferLoader_LoadViaBuffer:
 	call DOS_ReadFromFileHandle
 	cp .EOF
 	ret z
-	call Application_CheckDOSError
+	call DOS_TerminateIfError
 	push af
 	push ix
 	call MappedBufferLoader_GetWriter
