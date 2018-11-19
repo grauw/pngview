@@ -55,13 +55,13 @@ the binary and symbol files into the `bin` directory:
 
     make
 
-Windows users can open the `Makefile` and build by pasting the line in the `all`
-target into the Windows command prompt.
+Windows users can open the `Makefile` and build by pasting the lines in the
+`all` target into the Windows command prompt.
 
 To launch the build in openMSX after building, put a copy of `MSXDOS2.SYS` and
 `COMMAND2.COM` and some PNG files to test with in the `bin` directory, and then
 invoke the `make run` command.
 
 Note that the [glass](https://bitbucket.org/grauw/glass) assembler which is
-embedded in the project requires [Java 7](http://java.com/getjava). To check
+embedded in the project requires [Java 8](http://java.com/getjava). To check
 your Java version, invoke the `java -version` command.
