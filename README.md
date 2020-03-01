@@ -14,6 +14,18 @@ Shows PNG files on MSX.
   * Support: <http://www.msx.org/forum/msx-talk/software/pngview>
   * License: Simplified BSD License
 
+It currently supports PNG files which are stored progressively (most of them),
+including those with transparency. Since no scaling is applied to the output, it
+works best with images of size 256x212 or smaller. Beware that because it first
+decompresses the PNG fully before showing it, it can be very memory hungry.
+
+What remains before making an official release is to:
+
+  * Support PNG “interlaced” storage mode (to be fully spec compliant)
+  * Reduce memory requirement to 64K
+  * Support screen modes other than screen 8
+  * Scale large images (currently shows top left corner)
+
 
 System requirements
 -------------------
@@ -48,9 +60,9 @@ mentioned in the project information section.
 You are also free to re-use code for your own projects, provided you abide by
 the license terms.
 
-Building the project with some of your own modifications is really easy on all
-modern desktop platforms. On Mac OS X and Linux, simply invoke `make` to build
-the binary and symbol files into the `bin` directory:
+Building the project is easy on all modern desktop platforms. On MacOS and
+Linux, simply invoke `make` to build the binary and symbol files into the
+`bin` directory:
 
     make
 
