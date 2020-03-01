@@ -8,15 +8,14 @@ Project information
 
 Shows PNG files on MSX.
 
-Author: Laurens Holst <laurens.nospam@grauw.nl>  
-Site: <https://bitbucket.org/grauw/pngview>  
-Downloads: <https://bitbucket.org/grauw/pngview/downloads>  
-Issues: <https://bitbucket.org/grauw/pngview/issues>  
-Support: <http://www.msx.org/forum/msx-talk/software/pngview>  
-License: Simplified BSD License
+  * Author: Laurens Holst <laurens@grauw.nl>
+  * Site: <http://www.grauw.nl/projects/pngview/>
+  * Source: <https://hg.sr.ht/~grauw/pngview>
+  * Support: <http://www.msx.org/forum/msx-talk/software/pngview>
+  * License: Simplified BSD License
 
 
-System Requirements
+System requirements
 -------------------
 
   * MSX2, MSX2+ or MSX turboR
@@ -62,6 +61,6 @@ To launch the build in openMSX after building, put a copy of `MSXDOS2.SYS` and
 `COMMAND2.COM` and some PNG files to test with in the `bin` directory, and then
 invoke the `make run` command.
 
-Note that the [glass](https://bitbucket.org/grauw/glass) assembler which is
+Note that the [glass](http://www.grauw.nl/projects/glass/) assembler which is
 embedded in the project requires [Java 8](http://java.com/getjava). To check
 your Java version, invoke the `java -version` command.
