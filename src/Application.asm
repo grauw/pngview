@@ -43,6 +43,9 @@ Application_MainContinue:
 
 	ld ix,Heap_main
 	call Heap_Construct
+	ld bc,HEAP_SIZE
+	ld de,HEAP
+	call Heap_Free
 
 	call MemoryTest_Test
 	call HeapTest_Test
