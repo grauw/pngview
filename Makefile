@@ -5,9 +5,8 @@ all:
 	java -jar tools/glass.jar -I gen -I lib/neonlib/src -I lib/gunzip/src src/COM.asm bin/pngview.com bin/pngview.sym
 
 dist: all
-	cp README.md LICENSE bin/
 	rm -f bin/pngview.zip
-	cd bin && zip pngview.zip pngview.com README.md LICENSE
+	zip -j bin/pngview.zip bin/pngview.com README.md LICENSE
 
 copy: all
 	cp bin/pngview.com $(COPY_TARGET)/
