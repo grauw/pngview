@@ -39,7 +39,6 @@ IndirectMappedReader_Destruct:
 	ld de,IndirectMappedReader.mappedReader
 	call MappedReader_Destruct
 	pop ix
-	call Reader_Destruct
 	ret
 
 ; bc = byte count
@@ -55,7 +54,7 @@ IndirectMappedReader_Fill_IY:
 	push de
 	ld bc,IndirectMappedReader.mappedReader
 	add iy,bc
-	ld h,(iy + MappedReader.super.bufferStart + 1)
+	ld h,(iy + MappedReader.super.bufferStart)
 	push hl
 	call Memory_GetSlot
 	pop hl

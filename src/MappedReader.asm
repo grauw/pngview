@@ -58,7 +58,6 @@ MappedReader_SetPosition_IY:
 	or 80H
 	ld (iy + MappedReader.super.bufferPosition),l
 	ld (iy + MappedReader.super.bufferPosition + 1),a
-	ld (iy + MappedReader.super.fillPending),0
 	ld a,h
 	rla
 	rl e
@@ -66,7 +65,7 @@ MappedReader_SetPosition_IY:
 	rl e
 	ld (iy + MappedReader.positionSegmentIndex),e
 	ld a,e
-	ld h,(iy + MappedReader.super.bufferStart + 1)
+	ld h,(iy + MappedReader.super.bufferStart)
 	call MappedBuffer_SelectSegment
 	pop ix
 	ret
@@ -76,9 +75,10 @@ MappedReader_SetPosition_IY:
 MappedReader_GetPosition_IY: PROC
 	ld l,(iy + MappedReader.super.bufferPosition)
 	ld h,(iy + MappedReader.super.bufferPosition + 1)
+	ld a,h
+	cp (iy + MappedReader.super.bufferEnd)
 	ld a,(iy + MappedReader.positionSegmentIndex)
-	bit 0,(iy + MappedReader.super.fillPending)
-	call nz,FillPending
+	call nc,FillPending
 	rlc h
 	rlc h
 	rrca
@@ -90,8 +90,8 @@ MappedReader_GetPosition_IY: PROC
 	ld d,0
 	ret
 FillPending:
-	ld l,(iy + MappedReader.super.bufferStart)
-	ld h,(iy + MappedReader.super.bufferStart + 1)
+	ld l,0
+	ld h,(iy + MappedReader.super.bufferStart)
 	inc a
 	ret
 	ENDP
@@ -157,7 +157,7 @@ MappedReader_SelectNextSegment_IY:
 	push de
 	push ix
 	call MappedReader_GetBuffer_IY
-	ld h,(iy + MappedReader.super.bufferStart + 1)
+	ld h,(iy + MappedReader.super.bufferStart)
 	call MappedBuffer_SelectSegment
 	pop ix
 	pop de
@@ -169,7 +169,7 @@ MappedReader_SelectCurrentSegment_IY:
 	push de
 	push ix
 	call MappedReader_GetBuffer_IY
-	ld h,(iy + MappedReader.super.bufferStart + 1)
+	ld h,(iy + MappedReader.super.bufferStart)
 	call MappedBuffer_SelectSegment
 	pop ix
 	pop de

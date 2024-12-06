@@ -34,6 +34,9 @@ PNG: MACRO
 		ds 256,255
 	ENDM
 
+ZlibArchive_class: Class ZlibArchive, ZlibArchive_template, Heap_main
+ZlibArchive_template: ZlibArchive
+
 ; de = reader
 ; ix = this
 ; ix <- this
@@ -474,14 +477,29 @@ PNG_Decompress:
 	ld d,ixh
 	ex (sp),ix  ; sp = this, reader, writer, ix = zlibarchive
 	push ix
+	push de
+	push ix
+	ld ix,Heap_main
+	ld bc,Decoders._size
+	call Heap_Allocate
+	ld c,e
+	ld b,d
+	pop ix
+	pop de
+	push bc
 	ld hl,ZlibArchive_Extract
 	call System_TryCall
+	pop de
+	push ix
+	ld ix,Heap_main
+	ld bc,Decoders._size
+	call Heap_Free
+	pop ix
 	pop ix
 	ex (sp),ix
 	call Mapped32KWriter_Destruct
 	call Mapped32KWriter_class.Delete
 	pop ix
-	call ZlibArchive_Destruct
 	call ZlibArchive_class.Delete
 	pop ix
 	call IndirectMappedReader_Destruct

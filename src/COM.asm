@@ -6,7 +6,6 @@
 
 	INCLUDE "Macros.asm"
 
-DEBUG: equ 1
 ZLIB_ADLER32: equ 1
 
 HEAP: equ 0C000H
@@ -47,15 +46,15 @@ RAM: equ RAM_PAGE1
 
 	; gunzip
 	INCLUDE "ZlibArchive.asm"
+	INCLUDE "Adler32Checker.asm"
 	INCLUDE "deflate/Inflate.asm"
+	INCLUDE "deflate/Decoder.asm"
 	INCLUDE "deflate/Alphabet.asm"
 	INCLUDE "deflate/Branch.asm"
-	INCLUDE "deflate/FixedAlphabets.asm"
-	INCLUDE "deflate/DynamicAlphabets.asm"
+	INCLUDE "deflate/HuffmanCodes.asm"
 	INCLUDE "Reader.asm"
 	INCLUDE "Writer.asm"
 	INCLUDE "FileReader.asm"
-	INCLUDE "Adler32Checker.asm"
 	INCLUDE "PNG.asm"
 
 	ENDS
