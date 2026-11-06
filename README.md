@@ -10,7 +10,7 @@ Shows PNG files on MSX.
 
   * Author: Laurens Holst <laurens@grauw.nl>
   * Site: <http://www.grauw.nl/projects/pngview/>
-  * Source: <https://hg.sr.ht/~grauw/pngview>
+  * Source: <https://github.com/grauw/pngview>
   * Support: <http://www.msx.org/forum/msx-talk/software/pngview>
   * License: Simplified BSD License
 
